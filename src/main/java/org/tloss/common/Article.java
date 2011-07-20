@@ -3,6 +3,7 @@ package org.tloss.common;
 public class Article {
 	String title;
 	String content;
+	String desciption;
 
 	public Article() {
 
@@ -28,6 +29,12 @@ public class Article {
 
 	public void setContent(String content) {
 		this.content = content;
+	}
+	public void setDesciption(String desciption) {
+		this.desciption = desciption;
+	}
+	public String getDesciption() {
+		return desciption;
 	}
 
 }

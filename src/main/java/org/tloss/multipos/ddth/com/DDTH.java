@@ -36,8 +36,7 @@ import org.tloss.common.DefaultResponseHandler;
 import org.tloss.multiget.xhtt.XHTTGetArticle;
 import org.tloss.multipos.PostArticle;
 
-
-public class DDTH   implements PostArticle {
+public class DDTH implements PostArticle {
 	HttpClient httpclient = new DefaultHttpClient();
 	ResponseHandler<String> responseHandler = new DefaultResponseHandler();
 
@@ -45,12 +44,14 @@ public class DDTH   implements PostArticle {
 		http.setHeader(
 				"User-Agent",
 				"Mozilla/5.0 (Windows; U; Windows NT 6.1; en-GB; rv:1.9.2.17) Gecko/20110420 Firefox/3.6.17");
-		http.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+		http.setHeader("Accept",
+				"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 		http.setHeader("Accept-Language", "en-gb,en;q=0.5");
 		http.setHeader("Accept-Encoding", "gzip,deflate");
 		http.setHeader("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
 		http.setHeader("Connection", "keep-alive");
-		//http.setHeader("Host", "www.ddth.com");
+		http.setHeader("Keep-Alive","115");
+		http.setHeader("Referer",	"http://www.ddth.com/forum.php");
 	}
 
 	public void initHttpClient(HttpClient httpclient) {
@@ -348,10 +349,26 @@ public class DDTH   implements PostArticle {
 					passwords[1] = (String) options[1];
 				}
 			}
+//			StringBuffer buffer =  new StringBuffer();
+//			buffer.append(getUrl(LOGIN_POST_URL, null));
+//			buffer.append("&").append("vb_login_username=").append(username);
+//			buffer.append("&").append("vb_login_password=").append(password);
+//			buffer.append("&").append("s=").append("");
+//			buffer.append("&").append("securitytoken=").append(securitytoken);
+//			buffer.append("&").append("vb_login_md5password=").append(passwords[0]);
+//			buffer.append("&").append("vb_login_md5password_utf=").append(passwords[1]);
+//			System.out.println(buffer);
+//			 httpGetStepOne = new HttpGet(buffer.toString());
+//			setHeader(httpGetStepOne);
+//			 responseBody = httpclient.execute(httpGetStepOne,
+//					responseHandler);
+//			 System.out.println(responseBody);
+			 
 			HttpPost httpPost = new HttpPost(getUrl(LOGIN_POST_URL, null));
 			List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 			nvps.add(new BasicNameValuePair("vb_login_username", username));
-			nvps.add(new BasicNameValuePair("vb_login_password", ""));
+			
+			nvps.add(new BasicNameValuePair("vb_login_password", password));
 			nvps.add(new BasicNameValuePair("s", ""));
 			nvps.add(new BasicNameValuePair("securitytoken", securitytoken));
 			nvps.add(new BasicNameValuePair("do", "login"));
@@ -359,11 +376,12 @@ public class DDTH   implements PostArticle {
 					passwords[0]));
 			nvps.add(new BasicNameValuePair("vb_login_md5password_utf",
 					passwords[1]));
-			httpPost.setEntity(new UrlEncodedFormEntity(nvps, HTTP.UTF_8));
+			httpPost.setEntity(new UrlEncodedFormEntity(nvps));
 			setHeader(httpPost);
 			responseBody = httpclient.execute(httpPost, responseHandler);
 			if (responseBody != null
-					&& responseBody.indexOf("Cám ơn, <strong>"+username+"</strong> đã đăng nhập thành công") > 0) {
+					&& responseBody.indexOf("Thank you for logging in, " + username
+							) > 0) {
 
 				//
 				tagNode = new HtmlCleaner(props).clean(new StringReader(
@@ -398,20 +416,21 @@ public class DDTH   implements PostArticle {
 	public static void main(String[] args) throws Exception {
 
 		DDTH article = new DDTH();
-		article.login("myname74119", null, true, new Object[] {
-				"59f255f323a7d3827171304187a87e6a",
-				"59f255f323a7d3827171304187a87e6a" });
+		article.login("myname74119", "z712211z74119", true, new Object[] { "",
+				"" });
 		// 3 -Software Area -System Tools
-		
+
 		XHTTGetArticle getArticle = new XHTTGetArticle();
 		Article article2 = getArticle
 				.get("http://xahoithongtin.com.vn/2011061508031456p0c252/filerfrog-thanh-phan-mo-rong-tuyet-voi-cho-windows-explorer.htm");
 		article2.setContent(article2.getContent() + "Nguồn XHTT ");
-		//System.out.println(article2.getTitle());
-		//System.out.println(article2.getContent());
-		article.post(article2, article.getUrl(PostArticle.POST_FORM_URL,
-				new Object[] { "3" }), article.getUrl(PostArticle.POST_URL,
-				new Object[] { "3" }), null);
+		// System.out.println(article2.getTitle());
+		// System.out.println(article2.getContent());
+		article.post(
+				article2,
+				article.getUrl(PostArticle.POST_FORM_URL, new Object[] { "3" }),
+				article.getUrl(PostArticle.POST_URL, new Object[] { "3" }),
+				null);
 		// System.out.println(article.md5hash("123456789")[0]);
 		// 25f9e794323b453885f5181f1b624d0b
 	}
