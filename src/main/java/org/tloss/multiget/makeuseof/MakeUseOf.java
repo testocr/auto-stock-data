@@ -1,7 +1,7 @@
-package org.tloss.multiget.xhtt;
+package org.tloss.multiget.makeuseof;
 
 import java.io.StringReader;
-import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.HttpVersion;
@@ -15,7 +15,6 @@ import org.apache.http.message.AbstractHttpMessage;
 import org.apache.http.params.CoreProtocolPNames;
 import org.dom4j.Document;
 import org.dom4j.Element;
-import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
 import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
@@ -23,10 +22,9 @@ import org.htmlcleaner.PrettyXmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.tloss.common.Article;
 import org.tloss.common.DefaultResponseHandler;
-import org.tloss.multiget.GetArticle;
+import org.tloss.multiget.AutoGetArticle;
 
-public class XHTTGetArticle implements GetArticle {
-
+public class MakeUseOf implements AutoGetArticle {
 	HttpClient httpclient = new DefaultHttpClient();
 	ResponseHandler<String> responseHandler = new DefaultResponseHandler();
 
@@ -56,16 +54,15 @@ public class XHTTGetArticle implements GetArticle {
 				CookiePolicy.BROWSER_COMPATIBILITY);
 	}
 
-	
 	public boolean login(String username, String password) throws Exception {
 		return true;
 	}
 
-	/**
-	 * Tieu de= //div[@id='content-main']/div[class='cont-article']/h1<br/>
-	 * Noi dung= //div[@id='divContentXHTT']<br/>
-	 * 
-	 */
+	public boolean login(String username, String password,
+			boolean encrytedPassword, Object[] options) throws Exception {
+		return true;
+	}
+
 	public Article get(String url) throws Exception {
 		initHttpClient(httpclient);
 
@@ -88,80 +85,65 @@ public class XHTTGetArticle implements GetArticle {
 		SAXReader reader = new SAXReader();
 		Document document = reader.read(new StringReader(xml));
 		List<?> list = document
-				.selectNodes("//div[@id='content-main']/div[@class='cont-article']/h1");
-		String title = "";
+				.selectNodes("//div[@class='article']/h1");
+		String title ="";
+		Article article = new Article();
 		for (Object object : list) {
 			Element element = (Element) object;
-			title = element.getTextTrim();
+			title =  element.getTextTrim();
+			article.setTitle(title);				
 		}
-		String content = "";
-		list = document.selectNodes("//div[@id='divContentXHTT']");
-		for (Object object : list) {
-			Element element = (Element) object;
-			content = getContent(element);
-		}
-		return new Article(title, content);
+		list = document
+				.selectNodes("//div[@class='content']");
+		
+		return article;
 	}
 
-	
 	public void logout() {
-		// TODO Auto-generated method stub
-
 	}
 
-	
-	public boolean login(String username, String password,
-			boolean encrytedPassword, Object[] options) throws Exception {
-		return true;
-	}
-
-	public String getContent(Element element) {
-		StringBuffer buffer = new StringBuffer();
-		Iterator<Node> divNodes = element.nodeIterator();
-		for (; divNodes.hasNext();) {
-			Node div = (Node) divNodes.next();
-			if (div.getNodeType() == Node.ELEMENT_NODE) {
-				Iterator<Node> divChilrenNodes = ((Element) div).nodeIterator();
-				for (; divChilrenNodes.hasNext();) {
-					Node node = (Node) divChilrenNodes.next();
-					if ("img".equalsIgnoreCase(node.getName())
-							&& node.getNodeType() == Node.ELEMENT_NODE) {
-						Element img = (Element) node;
-						if (img.attributeValue("src") != null) {
-							buffer.append("[IMG]")
-									.append(img.attributeValue("src"))
-									.append("[/IMG]");
-						}
-					} else if ("a".equalsIgnoreCase(node.getName())
-							&& node.getNodeType() == Node.ELEMENT_NODE) {
-						Element a = (Element) node;
-						if (a.attributeValue("href") != null) {
-							buffer.append("[URL=\"")
-									.append(a.attributeValue("href"))
-									.append("\"]").append(a.getTextTrim())
-									.append("[/URL]");
-						}
-					} else {
-						buffer.append(node.getText());
-					}
-				}
-			} else {
-				buffer.append(div.getText());
-			}
-		}
-		return buffer.toString();
-	}
-
-	public static void main(String[] args) throws Exception {
-		XHTTGetArticle article = new XHTTGetArticle();
-		article.login("", "");
-		Article a = article
-				.get("http://xahoithongtin.com.vn/20110511015619360p0c252/tiny-burner-chuong-trinh-ghi-dia-nho-gon-va-nhieu-tinh-nang.htm");
-		System.out.println(a.getContent());
+	public boolean isNew(String url, Object[] data) {
+		return false;
 	}
 
 	public Article[] getAll(String url) throws Exception {
-		return new Article[]{ get(url) };
+		ArrayList<Article> articles =  new ArrayList<Article>();
+		initHttpClient(httpclient);
+
+		HttpGet httpGetStepOne = new HttpGet(url);
+		setHeader(httpGetStepOne);
+		String responseBody = httpclient.execute(httpGetStepOne,
+				responseHandler);
+		// lay ra noi dung xml
+		CleanerProperties props = new CleanerProperties();
+		// set some properties to non-default values
+		props.setTranslateSpecialEntities(true);
+		props.setTransResCharsToNCR(true);
+		props.setOmitComments(true);
+		// do parsing
+		TagNode tagNode = new HtmlCleaner(props).clean(new StringReader(
+				responseBody));
+		// serialize to xml file
+		String xml = new PrettyXmlSerializer(props).getAsString(tagNode,
+				"utf-8");
+		SAXReader reader = new SAXReader();
+		Document document = reader.read(new StringReader(xml));
+		List<?> list = document
+				.selectNodes("//div[@class='article']/h1/a");
+		String link ="";
+		Article article;
+		for (Object object : list) {
+			Element element = (Element) object;
+			link =element.attributeValue("href");
+			article =  get(link);
+			articles.add(article);
+			
+		}
+		return null;
 	}
 
+	public static void main(String[] args) throws Exception {
+		MakeUseOf makeUseOf = new MakeUseOf();
+		makeUseOf.getAll("http://www.ghacks.net/tag/windows-7/");
+	}
 }
