@@ -383,7 +383,6 @@ public class HaiPhongITPost implements PostArticle {
 				article.getUrl(POST_FORM_URL, new Object[] { "90" }),
 				article.getUrl(POST_URL, new Object[] { "90" }),
 				new Object[] {});
-
 	}
 
 }

@@ -56,7 +56,7 @@ public class XHTTGetArticle implements GetArticle {
 				CookiePolicy.BROWSER_COMPATIBILITY);
 	}
 
-	@Override
+	
 	public boolean login(String username, String password) throws Exception {
 		return true;
 	}
@@ -103,13 +103,13 @@ public class XHTTGetArticle implements GetArticle {
 		return new Article(title, content);
 	}
 
-	@Override
+	
 	public void logout() {
 		// TODO Auto-generated method stub
 
 	}
 
-	@Override
+	
 	public boolean login(String username, String password,
 			boolean encrytedPassword, Object[] options) throws Exception {
 		return true;
