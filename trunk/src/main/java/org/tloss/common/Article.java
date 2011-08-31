@@ -1,9 +1,12 @@
 package org.tloss.common;
 
+import java.util.Date;
+
 public class Article {
 	String title;
 	String content;
 	String desciption;
+	Date create;
 
 	public Article() {
 
@@ -37,4 +40,13 @@ public class Article {
 		return desciption;
 	}
 
+	public Date getCreate() {
+		return create;
+	}
+
+	public void setCreate(Date create) {
+		this.create = create;
+	}
+
+	
 }

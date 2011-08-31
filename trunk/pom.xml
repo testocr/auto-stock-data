@@ -35,6 +35,11 @@
 			<artifactId>phobos-rhino</artifactId>
 			<version>0.5.8</version>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.derby</groupId>
+			<artifactId>derbynet</artifactId>
+			<version>10.8.1.2</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
