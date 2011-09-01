@@ -129,14 +129,12 @@ public class XHTTPost implements PostArticle {
 			break;
 		case PostArticle.POST_FORM_URL:
 			if (options != null && options.length > 0) {
-				url = "http://haiphongit.com/forum/newthread.php?do=newthread&f="
-						+ options[0];
+				url = "http://admin.xhtt.vn/office/add.chn";
 			}
 			break;
 		case PostArticle.POST_URL:
 			if (options != null && options.length > 0) {
-				url = "http://haiphongit.com/forum/newthread.php?do=postthread&f="
-						+ options[0];
+				url = "http://admin.xhtt.vn/office/add.chn";
 			}
 
 			break;
@@ -158,8 +156,65 @@ public class XHTTPost implements PostArticle {
 
 	public boolean post(Article article, String urlEdit, String urlPost,
 			Object[] options) throws Exception {
+		initHttpClient(httpclient);
 
-		return false;
+		HttpGet httpGetStepOne = new HttpGet(urlEdit);
+		setHeader(httpGetStepOne);
+		String responseBody = httpclient.execute(httpGetStepOne,
+				responseHandler);
+		// lay ra noi dung xml
+		CleanerProperties props = new CleanerProperties();
+		// set some properties to non-default values
+		props.setTranslateSpecialEntities(true);
+		props.setTransResCharsToNCR(true);
+		props.setOmitComments(true);
+		// do parsing
+		TagNode tagNode = new HtmlCleaner(props).clean(new StringReader(
+				responseBody));
+		// serialize to xml file
+		String xml = new PrettyXmlSerializer(props).getAsString(tagNode,
+				"utf-8");
+		SAXReader reader = new SAXReader();
+		Document document = reader.read(new StringReader(xml));
+		List<?> list = document.selectNodes("//input");
+		MultipartEntity entity = new MultipartEntity();
+		for (Object object : list) {
+			Element element = (Element) object;
+			if (element.attributeValue("name") != null) {
+				if (element.attributeValue("name").endsWith("account")
+						|| element.attributeValue("name").endsWith("password")
+						|| element.attributeValue("name").equals(
+								"__EVENTTARGET")) {
+					if (element.attributeValue("name").endsWith("account")) {
+						StringBody body = new StringBody(username);
+						entity.addPart(element.attributeValue("name"), body);
+					} else if (element.attributeValue("name").equals(
+							"__EVENTTARGET")) {
+						StringBody body = new StringBody("tab$ctl16$lnkLogin");
+						entity.addPart("__EVENTTARGET", body);
+					} else {
+						StringBody body = new StringBody(password);
+						entity.addPart(element.attributeValue("name"), body);
+					}
+				} else {
+					if (element.attributeValue("value") != null) {
+						StringBody body = new StringBody(
+								element.attributeValue("value"));
+
+						entity.addPart(element.attributeValue("name"), body);
+					}
+				}
+			}
+		}
+		HttpPost httpPost = new HttpPost(urlPost);
+		httpPost.setEntity(entity);
+		setHeader(httpPost);
+		responseBody = httpclient.execute(httpPost, responseHandler);
+		httpGetStepOne = new HttpGet(getUrl(HOME_PAGE, null));
+		setHeader(httpGetStepOne);
+		responseBody = httpclient.execute(httpGetStepOne, responseHandler);
+		System.out.println(responseBody);
+		return responseBody.indexOf("Đăng xuất") >= 0;
 	}
 
 	public void logout() {

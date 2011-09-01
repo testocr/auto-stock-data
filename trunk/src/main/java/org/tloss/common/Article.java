@@ -7,6 +7,7 @@ public class Article {
 	String content;
 	String desciption;
 	Date create;
+	String source;
 
 	public Article() {
 
@@ -46,6 +47,14 @@ public class Article {
 
 	public void setCreate(Date create) {
 		this.create = create;
+	}
+
+	public String getSource() {
+		return source;
+	}
+
+	public void setSource(String source) {
+		this.source = source;
 	}
 
 	
