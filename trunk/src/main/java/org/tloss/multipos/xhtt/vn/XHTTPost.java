@@ -1,5 +1,6 @@
 package org.tloss.multipos.xhtt.vn;
 
+import java.io.FileOutputStream;
 import java.io.StringReader;
 import java.util.List;
 
@@ -24,6 +25,7 @@ import org.htmlcleaner.PrettyXmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.tloss.common.Article;
 import org.tloss.common.DefaultResponseHandler;
+import org.tloss.multiget.makeuseof.MakeUseOf;
 import org.tloss.multipos.PostArticle;
 
 public class XHTTPost implements PostArticle {
@@ -128,15 +130,10 @@ public class XHTTPost implements PostArticle {
 			url = "http://admin.xhtt.vn/Login.chn";
 			break;
 		case PostArticle.POST_FORM_URL:
-			if (options != null && options.length > 0) {
-				url = "http://admin.xhtt.vn/office/add.chn";
-			}
+			url = "http://admin.xhtt.vn/office/add.chn";
 			break;
 		case PostArticle.POST_URL:
-			if (options != null && options.length > 0) {
-				url = "http://admin.xhtt.vn/office/add.chn";
-			}
-
+			url = "http://admin.xhtt.vn/office/add.chn";
 			break;
 		case PostArticle.HOME_PAGE:
 			url = "http://admin.xhtt.vn/Default.aspx";
@@ -181,39 +178,75 @@ public class XHTTPost implements PostArticle {
 		for (Object object : list) {
 			Element element = (Element) object;
 			if (element.attributeValue("name") != null) {
-				if (element.attributeValue("name").endsWith("account")
-						|| element.attributeValue("name").endsWith("password")
-						|| element.attributeValue("name").equals(
-								"__EVENTTARGET")) {
-					if (element.attributeValue("name").endsWith("account")) {
-						StringBody body = new StringBody(username);
-						entity.addPart(element.attributeValue("name"), body);
-					} else if (element.attributeValue("name").equals(
-							"__EVENTTARGET")) {
-						StringBody body = new StringBody("tab$ctl16$lnkLogin");
-						entity.addPart("__EVENTTARGET", body);
-					} else {
-						StringBody body = new StringBody(password);
-						entity.addPart(element.attributeValue("name"), body);
-					}
+				if (element.attributeValue("name").endsWith(
+						"tab$ctl16$ctl02$lstCat")) {
+					StringBody body = new StringBody("252");
+					entity.addPart("tab$ctl16$ctl02$lstCat", body);
+					System.out.println("tab$ctl16$ctl02$lstCat:252");
+				} else if (element.attributeValue("name").equals(
+						"__EVENTTARGET")) {
+					StringBody body = new StringBody(
+							"tab$ctl16$ctl02$btnUpdate");
+					entity.addPart("__EVENTTARGET", body);
+				} else if (element.attributeValue("name").equals(
+						"tab$ctl16$ctl02$txtSubTitle")) {
+					StringBody body = new StringBody("tungt84@gmail.com");
+					entity.addPart("tab$ctl16$ctl02$txtSubTitle", body);
+					System.out
+							.println("tab$ctl16$ctl02$txtSubTitle:tungt84@gmail.com");
+				} else if (element.attributeValue("name").equals(
+						"tab$ctl16$ctl02$txtTitle")) {
+					StringBody body = new StringBody(article.getTitle());
+					entity.addPart("tab$ctl16$ctl02$txtTitle", body);
+					System.out.println("tab$ctl16$ctl02$txtTitle:"
+							+ article.getTitle());
+				} else if (element.attributeValue("name").equals(
+						"tab$ctl16$ctl02$txtSelectedFile")) {
+					StringBody body = new StringBody(
+							"Images/Uploaded/Share/2011/09/2011090104041055/freeburningsoftware.png");
+					entity.addPart("tab$ctl16$ctl02$txtSelectedFile", body);
+					System.out
+							.println("tab$ctl16$ctl02$txtSelectedFile:Images/Uploaded/Share/2011/09/2011090104041055/freeburningsoftware.png");
+				} else if (element.attributeValue("name").equals(
+						"tab$ctl16$ctl02$NewsContent")) {
+					StringBody body = new StringBody(article.getContent());
+					entity.addPart("tab$ctl16$ctl02$NewsContent", body);
+					System.out.println("tab$ctl16$ctl02$NewsContent:"
+							+ article.getContent());
 				} else {
-					if (element.attributeValue("value") != null) {
-						StringBody body = new StringBody(
-								element.attributeValue("value"));
+					if (!element.attributeValue("name").equals(
+							"tab$ctl16$ctl02$btnSend")
+							&& element.attributeValue("name") != null) {
 
-						entity.addPart(element.attributeValue("name"), body);
+						if (element.attributeValue("value") != null) {
+							StringBody body = new StringBody(
+									element.attributeValue("value"));
+							entity.addPart(element.attributeValue("name"), body);
+							System.out.println(element.attributeValue("name")
+									+ ":" + element.attributeValue("value"));
+						}
 					}
 				}
 			}
 		}
+
+		StringBody body = new StringBody(article.getDesciption());
+		entity.addPart("tab$ctl16$ctl02$txtInit", body);
+		System.out
+				.println("tab$ctl16$ctl02$txtInit:" + article.getDesciption());
+
 		HttpPost httpPost = new HttpPost(urlPost);
 		httpPost.setEntity(entity);
 		setHeader(httpPost);
 		responseBody = httpclient.execute(httpPost, responseHandler);
-		httpGetStepOne = new HttpGet(getUrl(HOME_PAGE, null));
-		setHeader(httpGetStepOne);
-		responseBody = httpclient.execute(httpGetStepOne, responseHandler);
-		System.out.println(responseBody);
+		// httpGetStepOne = new HttpGet(getUrl(HOME_PAGE, null));
+		// setHeader(httpGetStepOne);
+		// responseBody = httpclient.execute(httpGetStepOne, responseHandler);
+		// System.out.println(responseBody);
+		FileOutputStream fileOutputStream = new FileOutputStream("test.html");
+		fileOutputStream.write(responseBody.getBytes());
+		fileOutputStream.flush();
+		fileOutputStream.close();
 		return responseBody.indexOf("Đăng xuất") >= 0;
 	}
 
@@ -223,6 +256,11 @@ public class XHTTPost implements PostArticle {
 
 	public static void main(String[] args) throws Exception {
 		XHTTPost post = new XHTTPost();
-		System.out.println(post.login("trantung", "123456789"));
+		MakeUseOf makeUseOf = new MakeUseOf();
+		Article[] articles = makeUseOf
+				.getAll("http://www.ghacks.net/tag/windows-7/");
+		System.out.println(post.login("trantung", "z712211z74119"));
+		post.post(articles[0], post.getUrl(POST_FORM_URL, null),
+				post.getUrl(POST_URL, null), null);
 	}
 }
