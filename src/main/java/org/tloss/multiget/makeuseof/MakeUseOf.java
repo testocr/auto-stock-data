@@ -1,7 +1,9 @@
 package org.tloss.multiget.makeuseof;
 
 import java.io.StringReader;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.http.HttpVersion;
@@ -15,6 +17,7 @@ import org.apache.http.message.AbstractHttpMessage;
 import org.apache.http.params.CoreProtocolPNames;
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
 import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
@@ -63,6 +66,7 @@ public class MakeUseOf implements AutoGetArticle {
 		return true;
 	}
 
+	SimpleDateFormat dateFormat =  new SimpleDateFormat(" E MMMM dd yyyy ");
 	public Article get(String url) throws Exception {
 		initHttpClient(httpclient);
 
@@ -84,18 +88,44 @@ public class MakeUseOf implements AutoGetArticle {
 				"utf-8");
 		SAXReader reader = new SAXReader();
 		Document document = reader.read(new StringReader(xml));
-		List<?> list = document
-				.selectNodes("//div[@class='article']/h1");
-		String title ="";
+		List<?> list = document.selectNodes("//div[@class='article']/h1");
+		String data = "";
 		Article article = new Article();
+		article.setDesciption(url);
 		for (Object object : list) {
 			Element element = (Element) object;
-			title =  element.getTextTrim();
-			article.setTitle(title);				
+			data = element.getTextTrim();
+			article.setTitle(data);
 		}
-		list = document
-				.selectNodes("//div[@class='content']");
-		
+		list = document.selectNodes("//div[@class='content']/p");
+		StringBuffer buffer = new StringBuffer();
+		for (Object object : list) {
+			Element element = (Element) object;
+			if ("tags".equals(element.attributeValue("class"))) {
+				data = element.getTextTrim();
+				//"Author: , Tuesday August 30, 2011 - Tags: , , , ,"
+				String[] temps =  data.split(",");
+				String temp =  temps[1]+temps[2];
+				temps  =  temp.split("-");
+				article.setCreate(dateFormat.parse(temps[0]));
+			} else {
+				Iterator<Node> divChilrenNodes = ((Element) element)
+						.nodeIterator();
+				for (; divChilrenNodes.hasNext();) {
+					Node node = (Node) divChilrenNodes.next();
+					if ("img".equalsIgnoreCase(node.getName())
+							&& node.getNodeType() == Node.ELEMENT_NODE) {
+						Element img = (Element) node;
+						buffer.append(img.asXML());
+					}
+				}
+				data = element.getTextTrim();
+				buffer.append(data);
+			}
+
+		}
+		article.setContent(buffer.toString());
+		article.setSource("ghacks");
 		return article;
 	}
 
@@ -107,7 +137,7 @@ public class MakeUseOf implements AutoGetArticle {
 	}
 
 	public Article[] getAll(String url) throws Exception {
-		ArrayList<Article> articles =  new ArrayList<Article>();
+		ArrayList<Article> articles = new ArrayList<Article>();
 		initHttpClient(httpclient);
 
 		HttpGet httpGetStepOne = new HttpGet(url);
@@ -128,22 +158,24 @@ public class MakeUseOf implements AutoGetArticle {
 				"utf-8");
 		SAXReader reader = new SAXReader();
 		Document document = reader.read(new StringReader(xml));
-		List<?> list = document
-				.selectNodes("//div[@class='article']/h1/a");
-		String link ="";
+		List<?> list = document.selectNodes("//div[@class='article']/h1/a");
+		String link = "";
 		Article article;
 		for (Object object : list) {
 			Element element = (Element) object;
-			link =element.attributeValue("href");
-			article =  get(link);
+			link = element.attributeValue("href");
+			article = get(link);
 			articles.add(article);
-			
+
 		}
-		return null;
+		Article[] result = new Article[articles.size()];
+		articles.toArray(result);
+		return result;
 	}
 
 	public static void main(String[] args) throws Exception {
 		MakeUseOf makeUseOf = new MakeUseOf();
-		makeUseOf.getAll("http://www.ghacks.net/tag/windows-7/");
+		Article[] articles =makeUseOf.getAll("http://www.ghacks.net/tag/windows-7/");
+				
 	}
 }
