@@ -2,6 +2,7 @@ package org.tloss.multipos.xhtt.vn;
 
 import java.io.FileOutputStream;
 import java.io.StringReader;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.http.HttpVersion;
@@ -18,6 +19,7 @@ import org.apache.http.message.AbstractHttpMessage;
 import org.apache.http.params.CoreProtocolPNames;
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
 import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
@@ -173,22 +175,12 @@ public class XHTTPost implements PostArticle {
 				"utf-8");
 		SAXReader reader = new SAXReader();
 		Document document = reader.read(new StringReader(xml));
-		List<?> list = document.selectNodes("//input");
+		List<?> list = document.selectNodes("//form[@id='RenderTable']//input");
 		MultipartEntity entity = new MultipartEntity();
 		for (Object object : list) {
 			Element element = (Element) object;
 			if (element.attributeValue("name") != null) {
-				if (element.attributeValue("name").endsWith(
-						"tab$ctl16$ctl02$lstCat")) {
-					StringBody body = new StringBody("252");
-					entity.addPart("tab$ctl16$ctl02$lstCat", body);
-					System.out.println("tab$ctl16$ctl02$lstCat:252");
-				} else if (element.attributeValue("name").equals(
-						"__EVENTTARGET")) {
-					StringBody body = new StringBody(
-							"tab$ctl16$ctl02$btnUpdate");
-					entity.addPart("__EVENTTARGET", body);
-				} else if (element.attributeValue("name").equals(
+				if (element.attributeValue("name").equals(
 						"tab$ctl16$ctl02$txtSubTitle")) {
 					StringBody body = new StringBody("tungt84@gmail.com");
 					entity.addPart("tab$ctl16$ctl02$txtSubTitle", body);
@@ -229,11 +221,82 @@ public class XHTTPost implements PostArticle {
 				}
 			}
 		}
+		list = document.selectNodes("//form[@id='RenderTable']//select");
+		for (Object object : list) {
+			Element element = (Element) object;
+			if (element.attributeValue("name") != null) {
+				if (element.attribute("name").getValue()
+						.equals("tab$ctl16$ctl02$lstCat")) {
+					StringBody body = new StringBody("252");
+					entity.addPart("tab$ctl16$ctl02$lstCat", body);
+					System.out.println("tab$ctl16$ctl02$lstCat:252");
+				} else {
+					Iterator<?> iterator = element.nodeIterator();
+					Element first = null;
+					boolean selected = false;
+					for (; iterator.hasNext();) {
+						Node ele = (Node) iterator.next();
+						if (iterator instanceof Element) {
+							Element element2 = (Element) ele;
+							if(first == null)
+								first = element2;
+							if (element2.attribute("selected") != null
+									&& "selected".equals(element2.attribute(
+											"selected").getValue())) {
+								selected = true;
+								StringBody body = new StringBody(
+										element2.attributeValue("value"));
+								entity.addPart(element.attribute("name")
+										.getValue(), body);
+								System.out.println(""
+										+ element.attributeValue("name") + ":"
+										+ element2.attributeValue("value"));
+							}
+						}
+
+					}
+					if(!selected && first!=null){
+						StringBody body = new StringBody(
+								first.attributeValue("value"));
+						entity.addPart(element.attribute("name")
+								.getValue(), body);
+						System.out.println(""
+								+ element.attributeValue("name") + ":"
+								+ first.attributeValue("value"));
+					}
+				}
+			}
+		}
 
 		StringBody body = new StringBody(article.getDesciption());
 		entity.addPart("tab$ctl16$ctl02$txtInit", body);
 		System.out
 				.println("tab$ctl16$ctl02$txtInit:" + article.getDesciption());
+		body = new StringBody("");
+		entity.addPart("tab$ctl16$ctl02$hidLuongSuKien", body);
+
+		body = new StringBody("");
+		entity.addPart("tab$ctl16$ctl02$txtIcon", body);
+
+		body = new StringBody("");
+		entity.addPart("tab$ctl16$ctl02$txtImageTitle", body);
+
+		body = new StringBody("");
+		entity.addPart("tab$ctl16$ctl02$txtSource", body);
+		
+		body = new StringBody("");
+		entity.addPart("tab$ctl16$ctl02$hdRelatNewsTitle", body);
+		
+		body = new StringBody("");
+		entity.addPart("tab$ctl16$ctl02$hdMediaTitle", body);
+		
+		body = new StringBody("");
+		entity.addPart("tab$ctl16$ctl02$hdRelatNews", body);
+		
+		body = new StringBody("");
+		entity.addPart("tab$ctl16$ctl02$hdMedia", body);
+		
+		
 
 		HttpPost httpPost = new HttpPost(urlPost);
 		httpPost.setEntity(entity);
@@ -243,6 +306,7 @@ public class XHTTPost implements PostArticle {
 		// setHeader(httpGetStepOne);
 		// responseBody = httpclient.execute(httpGetStepOne, responseHandler);
 		// System.out.println(responseBody);
+		System.out.println(responseBody);
 		FileOutputStream fileOutputStream = new FileOutputStream("test.html");
 		fileOutputStream.write(responseBody.getBytes());
 		fileOutputStream.flush();
