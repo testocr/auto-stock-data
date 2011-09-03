@@ -27,7 +27,7 @@ import org.htmlcleaner.PrettyXmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.tloss.common.Article;
 import org.tloss.common.DefaultResponseHandler;
-import org.tloss.multiget.makeuseof.GHacks;
+import org.tloss.multiget.ghacks.GHacks;
 import org.tloss.multipos.PostArticle;
 
 public class XHTTPost implements PostArticle {
