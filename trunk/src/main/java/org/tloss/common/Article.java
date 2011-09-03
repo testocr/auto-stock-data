@@ -1,6 +1,8 @@
 package org.tloss.common;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class Article {
 	String title;
@@ -8,9 +10,10 @@ public class Article {
 	String desciption;
 	Date create;
 	String source;
+	List<Image> images;
 
 	public Article() {
-
+		images = new ArrayList<Image>();
 	}
 
 	public Article(String title, String content) {
@@ -34,9 +37,11 @@ public class Article {
 	public void setContent(String content) {
 		this.content = content;
 	}
+
 	public void setDesciption(String desciption) {
 		this.desciption = desciption;
 	}
+
 	public String getDesciption() {
 		return desciption;
 	}
@@ -57,5 +62,12 @@ public class Article {
 		this.source = source;
 	}
 
-	
+	public List<Image> getImages() {
+		return images;
+	}
+
+	public void setImages(List<Image> images) {
+		this.images = images;
+	}
+
 }
