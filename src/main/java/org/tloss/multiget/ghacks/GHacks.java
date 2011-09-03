@@ -24,12 +24,15 @@ import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.PrettyXmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.tloss.common.Article;
+import org.tloss.common.ByteArrayResponseHandler;
 import org.tloss.common.DefaultResponseHandler;
+import org.tloss.common.Image;
 import org.tloss.multiget.AutoGetArticle;
 
 public class GHacks implements AutoGetArticle {
 	HttpClient httpclient = new DefaultHttpClient();
 	ResponseHandler<String> responseHandler = new DefaultResponseHandler();
+	ResponseHandler<byte[]> byteArrayResponseHandler = new ByteArrayResponseHandler();
 
 	public void setHeader(AbstractHttpMessage http) {
 		http.setHeader(
@@ -66,7 +69,19 @@ public class GHacks implements AutoGetArticle {
 		return true;
 	}
 
-	SimpleDateFormat dateFormat =  new SimpleDateFormat(" E MMMM dd yyyy ");
+	SimpleDateFormat dateFormat = new SimpleDateFormat(" E MMMM dd yyyy ");
+
+	public Image download(String url) throws Exception {
+		Image image = new Image();
+		image.setUrl(url);
+		HttpGet httpGetStepOne = new HttpGet(url);
+		setHeader(httpGetStepOne);
+		byte[] bs = httpclient
+				.execute(httpGetStepOne, byteArrayResponseHandler);
+		image.setData(bs);
+		return image;
+	}
+
 	public Article get(String url) throws Exception {
 		initHttpClient(httpclient);
 
@@ -103,13 +118,13 @@ public class GHacks implements AutoGetArticle {
 			Element element = (Element) object;
 			if ("tags".equals(element.attributeValue("class"))) {
 				data = element.getTextTrim();
-				//"Author: , Tuesday August 30, 2011 - Tags: , , , ,"
-				String[] temps =  data.split(",");
-				String temp =  temps[1]+temps[2];
-				temps  =  temp.split("-");
+				// "Author: , Tuesday August 30, 2011 - Tags: , , , ,"
+				String[] temps = data.split(",");
+				String temp = temps[1] + temps[2];
+				temps = temp.split("-");
 				article.setCreate(dateFormat.parse(temps[0]));
 			} else {
-				Iterator<Node> divChilrenNodes = ((Element) element)
+				Iterator<?> divChilrenNodes = ((Element) element)
 						.nodeIterator();
 				for (; divChilrenNodes.hasNext();) {
 					Node node = (Node) divChilrenNodes.next();
@@ -117,6 +132,8 @@ public class GHacks implements AutoGetArticle {
 							&& node.getNodeType() == Node.ELEMENT_NODE) {
 						Element img = (Element) node;
 						buffer.append(img.asXML());
+						Image image = download(img.attributeValue("src"));
+						article.getImages().add(image);
 					}
 				}
 				data = element.getTextTrim();
@@ -175,7 +192,8 @@ public class GHacks implements AutoGetArticle {
 
 	public static void main(String[] args) throws Exception {
 		GHacks makeUseOf = new GHacks();
-		Article[] articles =makeUseOf.getAll("http://www.ghacks.net/tag/windows-7/");
-				
+		Article[] articles = makeUseOf
+				.getAll("http://www.ghacks.net/tag/windows-7/");
+
 	}
 }
