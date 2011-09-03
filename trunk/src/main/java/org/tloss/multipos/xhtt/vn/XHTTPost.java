@@ -27,7 +27,7 @@ import org.htmlcleaner.PrettyXmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.tloss.common.Article;
 import org.tloss.common.DefaultResponseHandler;
-import org.tloss.multiget.makeuseof.MakeUseOf;
+import org.tloss.multiget.makeuseof.GHacks;
 import org.tloss.multipos.PostArticle;
 
 public class XHTTPost implements PostArticle {
@@ -320,7 +320,7 @@ public class XHTTPost implements PostArticle {
 
 	public static void main(String[] args) throws Exception {
 		XHTTPost post = new XHTTPost();
-		MakeUseOf makeUseOf = new MakeUseOf();
+		GHacks makeUseOf = new GHacks();
 		Article[] articles = makeUseOf
 				.getAll("http://www.ghacks.net/tag/windows-7/");
 		System.out.println(post.login("trantung", "z712211z74119"));
