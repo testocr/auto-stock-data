@@ -27,7 +27,7 @@ import org.tloss.common.Article;
 import org.tloss.common.DefaultResponseHandler;
 import org.tloss.multiget.AutoGetArticle;
 
-public class MakeUseOf implements AutoGetArticle {
+public class GHacks implements AutoGetArticle {
 	HttpClient httpclient = new DefaultHttpClient();
 	ResponseHandler<String> responseHandler = new DefaultResponseHandler();
 
@@ -174,7 +174,7 @@ public class MakeUseOf implements AutoGetArticle {
 	}
 
 	public static void main(String[] args) throws Exception {
-		MakeUseOf makeUseOf = new MakeUseOf();
+		GHacks makeUseOf = new GHacks();
 		Article[] articles =makeUseOf.getAll("http://www.ghacks.net/tag/windows-7/");
 				
 	}
