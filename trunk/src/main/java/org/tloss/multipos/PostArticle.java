@@ -9,6 +9,10 @@ public interface PostArticle {
 	public static final int POST_URL = 3;
 	public static final int LOGOUT_URL = 4;
 	public static final int HOME_PAGE = 5;
+	public static final int IMAGE_POST_FORM_URL_1 = 6;
+	public static final int IMAGE_POST_FORM_URL_2 = 7;
+	public static final int IMAGE_POST_URL = 8;
+	
 
 	public boolean login(String username, String password) throws Exception;
 
