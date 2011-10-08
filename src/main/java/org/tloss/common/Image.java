@@ -6,6 +6,8 @@
  */
 package org.tloss.common;
 
+import java.util.Arrays;
+
 /**
  * @author tungt
  * 
@@ -30,4 +32,35 @@ public class Image {
 		this.data = data;
 	}
 
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(data);
+		result = prime * result + ((url == null) ? 0 : url.hashCode());
+		return result;
+	}
+
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Image other = (Image) obj;
+		if (!Arrays.equals(data, other.data))
+			return false;
+		if (url == null) {
+			if (other.url != null)
+				return false;
+		} else if (!url.equals(other.url))
+			return false;
+		return true;
+	}
+
+	public String toString() {
+		StringBuffer buffer = new StringBuffer();
+		buffer.append("<img src=\"").append(url).append("\" />");
+		return buffer.toString();
+	}
 }
