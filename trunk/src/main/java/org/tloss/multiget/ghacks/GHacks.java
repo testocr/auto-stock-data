@@ -71,14 +71,16 @@ public class GHacks implements AutoGetArticle {
 
 	SimpleDateFormat dateFormat = new SimpleDateFormat(" E MMMM dd yyyy ");
 
-	public Image download(String url) throws Exception {
+	public Image download(String url, boolean skipData) throws Exception {
 		Image image = new Image();
 		image.setUrl(url);
-		HttpGet httpGetStepOne = new HttpGet(url);
-		setHeader(httpGetStepOne);
-		byte[] bs = httpclient
-				.execute(httpGetStepOne, byteArrayResponseHandler);
-		image.setData(bs);
+		if (!skipData) {
+			HttpGet httpGetStepOne = new HttpGet(url);
+			setHeader(httpGetStepOne);
+			byte[] bs = httpclient.execute(httpGetStepOne,
+					byteArrayResponseHandler);
+			image.setData(bs);
+		}
 		return image;
 	}
 
@@ -131,9 +133,17 @@ public class GHacks implements AutoGetArticle {
 					if ("img".equalsIgnoreCase(node.getName())
 							&& node.getNodeType() == Node.ELEMENT_NODE) {
 						Element img = (Element) node;
-						buffer.append(img.asXML());
-						Image image = download(img.attributeValue("src"));
+
+						Image image = download(img.attributeValue("src"), true);
 						article.getImages().add(image);
+						if (image.hashCode() < 0) {
+							buffer.append(" IMGM")
+									.append(Math.abs(image.hashCode()))
+									.append(" ");
+						} else {
+							buffer.append(" IMG").append(image.hashCode())
+									.append(" ");
+						}
 					}
 				}
 				data = element.getTextTrim();

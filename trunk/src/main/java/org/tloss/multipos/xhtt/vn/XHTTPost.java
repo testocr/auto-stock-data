@@ -1,6 +1,7 @@
 package org.tloss.multipos.xhtt.vn;
 
 import java.io.StringReader;
+import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.List;
 
@@ -31,6 +32,7 @@ import org.tloss.common.ImageBody;
 import org.tloss.common.UrlUtils;
 import org.tloss.multiget.ghacks.GHacks;
 import org.tloss.multipos.PostArticle;
+import org.tloss.translate.google.GoogleTranslate;
 
 public class XHTTPost implements PostArticle {
 	HttpClient httpclient = new DefaultHttpClient();
@@ -120,7 +122,7 @@ public class XHTTPost implements PostArticle {
 		httpGetStepOne = new HttpGet(getUrl(HOME_PAGE, null));
 		setHeader(httpGetStepOne);
 		responseBody = httpclient.execute(httpGetStepOne, responseHandler);
-		return responseBody.indexOf("Đăng xuất") >= 0;
+		return responseBody.indexOf("Ä�Äƒng xuáº¥t") >= 0;
 
 	}
 
@@ -167,9 +169,9 @@ public class XHTTPost implements PostArticle {
 
 	public boolean post(Article article, String urlEdit, String urlPost,
 			Object[] options) throws Exception {
-		for (Image image : article.getImages()) {
-			uploadImage(image);
-		}
+		// for (Image image : article.getImages()) {
+		// uploadImage(image);
+		// }
 		initHttpClient(httpclient);
 
 		HttpGet httpGetStepOne = new HttpGet(urlEdit);
@@ -192,27 +194,32 @@ public class XHTTPost implements PostArticle {
 		Document document = reader.read(new StringReader(xml));
 		List<?> list = document.selectNodes("//form[@id='RenderTable']//input");
 		MultipartEntity entity = new MultipartEntity();
+
 		for (Object object : list) {
 			Element element = (Element) object;
 			if (element.attributeValue("name") != null) {
 				if (element.attributeValue("name").equals(
 						"tab$ctl16$ctl02$txtSubTitle")) {
-					StringBody body = new StringBody((String) options[0]);
+					StringBody body = new StringBody((String) options[0],
+							Charset.forName("UTF-8"));
 					entity.addPart("tab$ctl16$ctl02$txtSubTitle", body);
 
 				} else if (element.attributeValue("name").equals(
 						"tab$ctl16$ctl02$txtTitle")) {
-					StringBody body = new StringBody(article.getTitle());
+					StringBody body = new StringBody(article.getTitle(),
+							Charset.forName("UTF-8"));
 					entity.addPart("tab$ctl16$ctl02$txtTitle", body);
 
 				} else if (element.attributeValue("name").equals(
 						"tab$ctl16$ctl02$txtSelectedFile")) {
-					StringBody body = new StringBody((String) options[1]);
+					StringBody body = new StringBody((String) options[1],
+							Charset.forName("UTF-8"));
 					entity.addPart("tab$ctl16$ctl02$txtSelectedFile", body);
 
 				} else if (element.attributeValue("name").equals(
 						"tab$ctl16$ctl02$NewsContent")) {
-					StringBody body = new StringBody(article.getContent());
+					StringBody body = new StringBody(article.getContent(),
+							Charset.forName("UTF-8"));
 					entity.addPart("tab$ctl16$ctl02$NewsContent", body);
 
 				} else {
@@ -222,7 +229,8 @@ public class XHTTPost implements PostArticle {
 
 						if (element.attributeValue("value") != null) {
 							StringBody body = new StringBody(
-									element.attributeValue("value"));
+									element.attributeValue("value"),
+									Charset.forName("UTF-8"));
 							entity.addPart(element.attributeValue("name"), body);
 
 						}
@@ -236,7 +244,8 @@ public class XHTTPost implements PostArticle {
 			if (element.attributeValue("name") != null) {
 				if (element.attribute("name").getValue()
 						.equals("tab$ctl16$ctl02$lstCat")) {
-					StringBody body = new StringBody((String) options[2]);
+					StringBody body = new StringBody((String) options[2],
+							Charset.forName("UTF-8"));
 					entity.addPart("tab$ctl16$ctl02$lstCat", body);
 
 				} else {
@@ -254,7 +263,8 @@ public class XHTTPost implements PostArticle {
 											"selected").getValue())) {
 								selected = true;
 								StringBody body = new StringBody(
-										element2.attributeValue("value"));
+										element2.attributeValue("value"),
+										Charset.forName("UTF-8"));
 								entity.addPart(element.attribute("name")
 										.getValue(), body);
 
@@ -264,7 +274,8 @@ public class XHTTPost implements PostArticle {
 					}
 					if (!selected && first != null) {
 						StringBody body = new StringBody(
-								first.attributeValue("value"));
+								first.attributeValue("value"),
+								Charset.forName("UTF-8"));
 						entity.addPart(element.attribute("name").getValue(),
 								body);
 
@@ -273,31 +284,32 @@ public class XHTTPost implements PostArticle {
 			}
 		}
 
-		StringBody body = new StringBody(article.getDesciption());
+		StringBody body = new StringBody(article.getDesciption(),
+				Charset.forName("UTF-8"));
 		entity.addPart("tab$ctl16$ctl02$txtInit", body);
 
-		body = new StringBody("");
+		body = new StringBody("", Charset.forName("UTF-8"));
 		entity.addPart("tab$ctl16$ctl02$hidLuongSuKien", body);
 
-		body = new StringBody("");
+		body = new StringBody("", Charset.forName("UTF-8"));
 		entity.addPart("tab$ctl16$ctl02$txtIcon", body);
 
-		body = new StringBody("");
+		body = new StringBody("", Charset.forName("UTF-8"));
 		entity.addPart("tab$ctl16$ctl02$txtImageTitle", body);
 
-		body = new StringBody("");
+		body = new StringBody("", Charset.forName("UTF-8"));
 		entity.addPart("tab$ctl16$ctl02$txtSource", body);
 
-		body = new StringBody("");
+		body = new StringBody("", Charset.forName("UTF-8"));
 		entity.addPart("tab$ctl16$ctl02$hdRelatNewsTitle", body);
 
-		body = new StringBody("");
+		body = new StringBody("", Charset.forName("UTF-8"));
 		entity.addPart("tab$ctl16$ctl02$hdMediaTitle", body);
 
-		body = new StringBody("");
+		body = new StringBody("", Charset.forName("UTF-8"));
 		entity.addPart("tab$ctl16$ctl02$hdRelatNews", body);
 
-		body = new StringBody("");
+		body = new StringBody("", Charset.forName("UTF-8"));
 		entity.addPart("tab$ctl16$ctl02$hdMedia", body);
 
 		HttpPost httpPost = new HttpPost(urlPost);
@@ -309,7 +321,7 @@ public class XHTTPost implements PostArticle {
 		// responseBody = httpclient.execute(httpGetStepOne, responseHandler);
 		// System.out.println(responseBody);
 		System.out.println(responseBody);
-		return responseBody.indexOf("Đăng xuất") >= 0;
+		return responseBody.indexOf("Ä�Äƒng xuáº¥t") >= 0;
 	}
 
 	public String uploadImage(Image image) throws Exception {
@@ -374,19 +386,42 @@ public class XHTTPost implements PostArticle {
 
 	}
 
+	public void proccessIMG(Article article) {
+		if (article.getImages() != null) {
+			for (int i = 0; i < article.getImages().size(); i++) {
+				Image img = article.getImages().get(i);
+				System.out.println(img.hashCode());
+				if (img.hashCode() < 0) {
+					article.setContent(article.getContent().replaceAll(
+							"IMGM" + Math.abs(img.hashCode()), img.toString()));
+				} else {
+					article.setContent(article.getContent().replaceAll(
+							"IMG" + img.hashCode(), img.toString()));
+				}
+				System.out.println(article.getContent());
+			}
+		}
+	}
+
 	public static void main(String[] args) throws Exception {
+
 		XHTTPost post = new XHTTPost();
 		GHacks makeUseOf = new GHacks();
 		Article[] articles = makeUseOf
 				.getAll("http://www.ghacks.net/tag/windows-7/");
 		System.out.println(post.login("trantung", "z712211z74119"));
-		post.post(
-				articles[0],
-				post.getUrl(POST_FORM_URL, null),
-				post.getUrl(POST_URL, null),
-				new Object[] {
-						"tungt84@gmail.com",
-						"Images/Uploaded/Share/2011/09/2011090104041055/freeburningsoftware.png",
-						"252" });
+		GoogleTranslate googleTranslate = new GoogleTranslate();
+		for (int i = 0; i < articles.length; i++) {
+			Article article = googleTranslate
+					.transalte(articles[i], "en", "vi");
+			post.proccessIMG(article);
+			String url = "Images/Uploaded/Share/2011/09/2011090104041055/freeburningsoftware.png";
+			if (article.getImages() != null && article.getImages().size() > 0) {
+				url = article.getImages().get(0).getUrl();
+			}
+			post.post(article, post.getUrl(POST_FORM_URL, null),
+					post.getUrl(POST_URL, null), new Object[] {
+							"tungt84@gmail.com", url, "252" });
+		}
 	}
 }
