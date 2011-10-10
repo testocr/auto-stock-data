@@ -1,6 +1,7 @@
 package org.tloss.multiget.makeuseof;
 
 import java.io.StringReader;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -24,12 +25,19 @@ import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.PrettyXmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.tloss.common.Article;
+import org.tloss.common.ByteArrayResponseHandler;
 import org.tloss.common.DefaultResponseHandler;
+import org.tloss.common.Image;
+import org.tloss.common.utils.DerbyDBUtils;
 import org.tloss.multiget.AutoGetArticle;
 
-public class MakeUseOF implements AutoGetArticle {
+
+
+public class MakeUseOF  implements AutoGetArticle {
+	SimpleDateFormat dateFormat = new SimpleDateFormat(" E MMMM dd yyyy ");
 	HttpClient httpclient = new DefaultHttpClient();
 	ResponseHandler<String> responseHandler = new DefaultResponseHandler();
+	ResponseHandler<byte[]> byteArrayResponseHandler = new ByteArrayResponseHandler();
 
 	public void setHeader(AbstractHttpMessage http) {
 		http.setHeader(
@@ -66,7 +74,6 @@ public class MakeUseOF implements AutoGetArticle {
 		return true;
 	}
 
-	SimpleDateFormat dateFormat =  new SimpleDateFormat(" E MMMM dd yyyy ");
 	public Article get(String url) throws Exception {
 		initHttpClient(httpclient);
 
@@ -88,55 +95,68 @@ public class MakeUseOF implements AutoGetArticle {
 				"utf-8");
 		SAXReader reader = new SAXReader();
 		Document document = reader.read(new StringReader(xml));
-		List<?> list = document.selectNodes("//div[@class='article']/h1");
+		List<?> list = document.selectNodes("//section[@id='post-entries']/header[@id='hdr-post']/h1");
 		String data = "";
 		Article article = new Article();
 		article.setDesciption(url);
 		for (Object object : list) {
+			
 			Element element = (Element) object;
+			
 			data = element.getTextTrim();
 			article.setTitle(data);
 		}
-		list = document.selectNodes("//div[@class='content']/p");
+		list = document.selectNodes("//section[@id='post-entries']/section[@id='wibya-share']/*[self::p or self::h2]");
 		StringBuffer buffer = new StringBuffer();
 		for (Object object : list) {
 			Element element = (Element) object;
 			if ("tags".equals(element.attributeValue("class"))) {
 				data = element.getTextTrim();
-				//"Author: , Tuesday August 30, 2011 - Tags: , , , ,"
-				String[] temps =  data.split(",");
-				String temp =  temps[1]+temps[2];
-				temps  =  temp.split("-");
+				// "Author: , Tuesday August 30, 2011 - Tags: , , , ,"
+				String[] temps = data.split(",");
+				String temp = temps[1] + temps[2];
+				temps = temp.split("-");
 				article.setCreate(dateFormat.parse(temps[0]));
 			} else {
-				Iterator<Node> divChilrenNodes = ((Element) element)
+				Iterator<?> divChilrenNodes = ((Element) element)
 						.nodeIterator();
 				for (; divChilrenNodes.hasNext();) {
 					Node node = (Node) divChilrenNodes.next();
 					if ("img".equalsIgnoreCase(node.getName())
 							&& node.getNodeType() == Node.ELEMENT_NODE) {
 						Element img = (Element) node;
-						buffer.append(img.asXML());
+
+						Image image = org.tloss.common.utils.Utils.download(
+								img.attributeValue("src"), true,httpclient);
+						article.getImages().add(image);
+						if (image.hashCode() < 0) {
+							buffer.append(" IMGM")
+									.append(Math.abs(image.hashCode()))
+									.append(" ");
+						} else {
+							buffer.append(" IMG").append(image.hashCode())
+									.append(" ");
+						}
+					}else if(node.getNodeType() == Node.TEXT_NODE){
+						data = node.getText().trim();
+						buffer.append(" ").append(data);
+					}else if(node.getNodeType() == Node.ELEMENT_NODE){
+						data = ((Element)node).getTextTrim();
+						buffer.append(" ").append(data);
 					}
 				}
-				data = element.getTextTrim();
-				buffer.append(data);
+				
 			}
 
 		}
 		article.setContent(buffer.toString());
-		article.setSource("ghacks");
+		article.setSource("makeuseof");
+		article.setUrl(url);
 		return article;
 	}
 
-	public void logout() {
-	}
-
-	public boolean isNew(String url, Object[] data) {
-		return false;
-	}
-
 	public Article[] getAll(String url) throws Exception {
+
 		ArrayList<Article> articles = new ArrayList<Article>();
 		initHttpClient(httpclient);
 
@@ -158,7 +178,8 @@ public class MakeUseOF implements AutoGetArticle {
 				"utf-8");
 		SAXReader reader = new SAXReader();
 		Document document = reader.read(new StringReader(xml));
-		List<?> list = document.selectNodes("//div[@class='article']/h1/a");
+		///article[@class='entry']/div[@class='content']/h1/a
+		List<?> list = document.selectNodes("//section[@id='post-entries']//article[@class='entry']/div[@class='content']/h1/a");
 		String link = "";
 		Article article;
 		for (Object object : list) {
@@ -173,9 +194,25 @@ public class MakeUseOF implements AutoGetArticle {
 		return result;
 	}
 
-	public static void main(String[] args) throws Exception {
-		MakeUseOF makeUseOf = new MakeUseOF();
-		Article[] articles =makeUseOf.getAll("http://www.ghacks.net/tag/windows-7/");
-				
+	public void logout() {
+
 	}
+
+	public boolean isNew(String url, Object[] data)  throws Exception{
+		try {
+			return !DerbyDBUtils.checkExisted(url);
+		} catch (SQLException e) {
+			throw e;
+		}
+	}
+	public static void main(String[] args) throws Exception {
+		MakeUseOF techmixer =  new MakeUseOF();
+		techmixer.getAll("http://www.makeuseof.com/service/windows/");
+	}
+
+	public String[] getDeafaltListUrl() {
+		return new String[]{"http://www.makeuseof.com/service/windows/"};
+	}
+
 }
+
