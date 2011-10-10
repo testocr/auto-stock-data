@@ -50,6 +50,8 @@ public class GoogleTranslate implements Translate {
 		art.setImages(article.getImages());
 		art.setSource(art.getSource());
 		art.setTitle(title);
+		art.setUrl(article.getUrl());
+		art.setSource(article.getSource());
 		return art;
 	}
 

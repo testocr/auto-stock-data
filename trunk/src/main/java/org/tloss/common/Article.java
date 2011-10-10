@@ -11,6 +11,16 @@ public class Article {
 	Date create;
 	String source;
 	List<Image> images;
+	String url;
+	
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
 
 	public Article() {
 		images = new ArrayList<Image>();
