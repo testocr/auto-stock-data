@@ -1,4 +1,4 @@
-package org.tloss.multiget.ghacks;
+package org.tloss.multiget.instantfundas.com;
 
 import java.io.StringReader;
 import java.sql.SQLException;
@@ -31,7 +31,7 @@ import org.tloss.common.Image;
 import org.tloss.common.utils.DerbyDBUtils;
 import org.tloss.multiget.AutoGetArticle;
 
-public class GHacks implements AutoGetArticle {
+public class Instantfundas  implements AutoGetArticle {
 	HttpClient httpclient = new DefaultHttpClient();
 	ResponseHandler<String> responseHandler = new DefaultResponseHandler();
 	ResponseHandler<byte[]> byteArrayResponseHandler = new ByteArrayResponseHandler();
@@ -107,7 +107,7 @@ public class GHacks implements AutoGetArticle {
 				"utf-8");
 		SAXReader reader = new SAXReader();
 		Document document = reader.read(new StringReader(xml));
-		List<?> list = document.selectNodes("//div[@class='article']/h1");
+		List<?> list = document.selectNodes("//div[@id='Blog1']/div[@class='blog-posts']/div[@class='post']/div/h1/a");
 		String data = "";
 		Article article = new Article();
 		article.setDesciption(url);
@@ -116,7 +116,7 @@ public class GHacks implements AutoGetArticle {
 			data = element.getTextTrim();
 			article.setTitle(data);
 		}
-		list = document.selectNodes("//div[@class='content']/p");
+		list = document.selectNodes("//div[@id='Blog1']/div[@class='blog-posts']/div[@class='post']/div/div[@class='entry']//*[self::p or self::h2 or self::ol]");
 		StringBuffer buffer = new StringBuffer();
 		for (Object object : list) {
 			Element element = (Element) object;
@@ -154,7 +154,7 @@ public class GHacks implements AutoGetArticle {
 
 		}
 		article.setContent(buffer.toString());
-		article.setSource("ghacks");
+		article.setSource("instantfundas");
 		article.setUrl(url);
 		return article;
 	}
@@ -192,7 +192,7 @@ public class GHacks implements AutoGetArticle {
 				"utf-8");
 		SAXReader reader = new SAXReader();
 		Document document = reader.read(new StringReader(xml));
-		List<?> list = document.selectNodes("//div[@class='article']/h1/a");
+		List<?> list = document.selectNodes("//div[@id='Blog1']/div[@class='blog-posts']/div[@class='post']/div/h1/a");
 		String link = "";
 		String article;
 		for (Object object : list) {
@@ -208,14 +208,14 @@ public class GHacks implements AutoGetArticle {
 	}
 
 	public static void main(String[] args) throws Exception {
-		GHacks makeUseOf = new GHacks();
+		Instantfundas makeUseOf = new Instantfundas();
 		Article[] articles = makeUseOf
-				.getAll("http://www.ghacks.net/tag/windows-7/");
+				.getAll("http://www.instantfundas.com/search/label/Windows?&max-results=10");
 
 	}
 
 	public String[] getDeafaltListUrl() {
-		return new String[] { "http://www.ghacks.net/tag/windows-7/" };
+		return new String[] { "http://www.instantfundas.com/search/label/Windows?&max-results=10" };
 	}
 
 	public Article[] get(String[] url) throws Exception {
@@ -237,5 +237,4 @@ public class GHacks implements AutoGetArticle {
 		String[] urls = getAllURL(url);
 		return get(urls);
 	}
-
 }

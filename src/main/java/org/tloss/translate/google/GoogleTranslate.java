@@ -3,6 +3,8 @@ package org.tloss.translate.google;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -34,28 +36,38 @@ import org.tloss.translate.Translate;
  * 
  */
 public class GoogleTranslate implements Translate {
+	public static Logger logger = Logger.getLogger(GoogleTranslate.class
+			.getName());
 
 	public GoogleTranslate() {
 		initScriptEngine();
 	}
 
-	public Article transalte(Article article, String lang1, String lang2) {
-		String content = translate(article.getContent(), lang1, lang2);
-		String title = translate(article.getTitle(), lang1, lang2);
-		String desciption = translate(article.getDesciption(), lang1, lang2);
-		Article art = new Article();
-		art.setContent(content);
-		art.setCreate(article.getCreate());
-		art.setDesciption(desciption);
-		art.setImages(article.getImages());
-		art.setSource(art.getSource());
-		art.setTitle(title);
-		art.setUrl(article.getUrl());
-		art.setSource(article.getSource());
-		return art;
+	public Article transalte(Article article, String lang1, String lang2)
+			throws Exception {
+		try {
+			String content = translate(article.getContent(), lang1, lang2);
+			String title = translate(article.getTitle(), lang1, lang2);
+			String desciption = translate(article.getDesciption(), lang1, lang2);
+			Article art = new Article();
+			art.setContent(content);
+			art.setCreate(article.getCreate());
+			art.setDesciption(desciption);
+			art.setImages(article.getImages());
+			art.setSource(art.getSource());
+			art.setTitle(title);
+			art.setUrl(article.getUrl());
+			art.setSource(article.getSource());
+			return art;
+		} catch (Exception e) {
+			logger.log(Level.INFO,"Error to transale URL: " + article.getUrl());
+			throw e;
+		}
 	}
 
-	public String translate(String data, String lang1, String lang2) {
+	public String translate(String data, String lang1, String lang2)
+			throws Exception {
+		String responseBody = null;
 		try {
 			initHttpClient(httpclient);
 			HttpPost httpPost = new HttpPost(
@@ -73,14 +85,15 @@ public class GoogleTranslate implements Translate {
 			nvps.add(new BasicNameValuePair("ssel", "0"));
 			nvps.add(new BasicNameValuePair("tsel", "0"));
 			httpPost.setEntity(new UrlEncodedFormEntity(nvps, HTTP.UTF_8));
-			String responseBody = httpclient.execute(httpPost, responseHandler);
+			responseBody = httpclient.execute(httpPost, responseHandler);
 			Object result = invocableEngine.invokeFunction(
 					"getTranslateString", responseBody);
 			return result.toString();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.log(Level.INFO, "Error to transale", e);
+			logger.log(Level.INFO, "Error data: " + responseBody);
+			throw e;
 		}
-		return null;
 	}
 
 	HttpClient httpclient = new DefaultHttpClient();
@@ -132,7 +145,8 @@ public class GoogleTranslate implements Translate {
 				.getAll("http://www.ghacks.net/tag/windows-7/");
 		GoogleTranslate googleTranslate = new GoogleTranslate();
 		for (int i = 0; i < articles.length; i++) {
-			Article article=  googleTranslate.transalte(articles[i], "en", "vi");
+			Article article = googleTranslate
+					.transalte(articles[i], "en", "vi");
 			System.out.println(article.getContent());
 		}
 	}

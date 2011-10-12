@@ -1,4 +1,4 @@
-package org.tloss.multiget.ghacks;
+package org.tloss.multiget.techspot.com;
 
 import java.io.StringReader;
 import java.sql.SQLException;
@@ -31,7 +31,8 @@ import org.tloss.common.Image;
 import org.tloss.common.utils.DerbyDBUtils;
 import org.tloss.multiget.AutoGetArticle;
 
-public class GHacks implements AutoGetArticle {
+public class Techspot implements AutoGetArticle {
+	SimpleDateFormat dateFormat = new SimpleDateFormat(" E MMMM dd yyyy ");
 	HttpClient httpclient = new DefaultHttpClient();
 	ResponseHandler<String> responseHandler = new DefaultResponseHandler();
 	ResponseHandler<byte[]> byteArrayResponseHandler = new ByteArrayResponseHandler();
@@ -71,21 +72,6 @@ public class GHacks implements AutoGetArticle {
 		return true;
 	}
 
-	SimpleDateFormat dateFormat = new SimpleDateFormat(" E MMMM dd yyyy ");
-
-	public Image download(String url, boolean skipData) throws Exception {
-		Image image = new Image();
-		image.setUrl(url);
-		if (!skipData) {
-			HttpGet httpGetStepOne = new HttpGet(url);
-			setHeader(httpGetStepOne);
-			byte[] bs = httpclient.execute(httpGetStepOne,
-					byteArrayResponseHandler);
-			image.setData(bs);
-		}
-		return image;
-	}
-
 	public Article get(String url) throws Exception {
 		initHttpClient(httpclient);
 
@@ -107,7 +93,7 @@ public class GHacks implements AutoGetArticle {
 				"utf-8");
 		SAXReader reader = new SAXReader();
 		Document document = reader.read(new StringReader(xml));
-		List<?> list = document.selectNodes("//div[@class='article']/h1");
+		List<?> list = document.selectNodes("//div[@id='news_container']/div[@class='story_post']/h1");
 		String data = "";
 		Article article = new Article();
 		article.setDesciption(url);
@@ -116,7 +102,7 @@ public class GHacks implements AutoGetArticle {
 			data = element.getTextTrim();
 			article.setTitle(data);
 		}
-		list = document.selectNodes("//div[@class='content']/p");
+		list = document.selectNodes("//div[@id='news_container']/div[@class='story_post']/div[@class='story_content html_only']/p");
 		StringBuffer buffer = new StringBuffer();
 		for (Object object : list) {
 			Element element = (Element) object;
@@ -136,7 +122,8 @@ public class GHacks implements AutoGetArticle {
 							&& node.getNodeType() == Node.ELEMENT_NODE) {
 						Element img = (Element) node;
 
-						Image image = download(img.attributeValue("src"), true);
+						Image image = org.tloss.common.utils.Utils.download(
+								"http://www.techspot.com"+img.attributeValue("src"), true,httpclient);
 						article.getImages().add(image);
 						if (image.hashCode() < 0) {
 							buffer.append(" IMGM")
@@ -146,31 +133,26 @@ public class GHacks implements AutoGetArticle {
 							buffer.append(" IMG").append(image.hashCode())
 									.append(" ");
 						}
+					}else if(node.getNodeType() == Node.TEXT_NODE){
+						data = node.getText().trim();
+						buffer.append(" ").append(data);
+					}else if(node.getNodeType() == Node.ELEMENT_NODE){
+						data = ((Element)node).getTextTrim();
+						buffer.append(" ").append(data);
 					}
 				}
-				data = element.getTextTrim();
-				buffer.append(data);
+				
 			}
 
 		}
 		article.setContent(buffer.toString());
-		article.setSource("ghacks");
+		article.setSource("techmixer");
 		article.setUrl(url);
 		return article;
 	}
 
-	public void logout() {
-	}
-
-	public boolean isNew(String url, Object[] data) throws Exception {
-		try {
-			return !DerbyDBUtils.checkExisted(url);
-		} catch (SQLException e) {
-			throw e;
-		}
-	}
-
 	public String[] getAllURL(String url) throws Exception {
+
 		ArrayList<String> articles = new ArrayList<String>();
 		initHttpClient(httpclient);
 
@@ -192,13 +174,13 @@ public class GHacks implements AutoGetArticle {
 				"utf-8");
 		SAXReader reader = new SAXReader();
 		Document document = reader.read(new StringReader(xml));
-		List<?> list = document.selectNodes("//div[@class='article']/h1/a");
+		List<?> list = document.selectNodes("//div[@id='news_container']/div/h2[@class='title ']/a");
 		String link = "";
 		String article;
 		for (Object object : list) {
 			Element element = (Element) object;
 			link = element.attributeValue("href");
-			article = link;
+			article = "http://www.techspot.com"+link;
 			articles.add(article);
 
 		}
@@ -207,17 +189,26 @@ public class GHacks implements AutoGetArticle {
 		return result;
 	}
 
-	public static void main(String[] args) throws Exception {
-		GHacks makeUseOf = new GHacks();
-		Article[] articles = makeUseOf
-				.getAll("http://www.ghacks.net/tag/windows-7/");
+	public void logout() {
 
+	}
+
+	public boolean isNew(String url, Object[] data)  throws Exception{
+		try {
+			return !DerbyDBUtils.checkExisted(url);
+		} catch (SQLException e) {
+			throw e;
+		}
+	}
+	public static void main(String[] args) throws Exception {
+		Techspot techmixer =  new Techspot();
+		techmixer.getAll("http://www.techspot.com/category/software/");
 	}
 
 	public String[] getDeafaltListUrl() {
-		return new String[] { "http://www.ghacks.net/tag/windows-7/" };
+		
+		return new String[]{"http://www.techspot.com/category/software/"};
 	}
-
 	public Article[] get(String[] url) throws Exception {
 		if (url != null) {
 			ArrayList<Article> articles = new ArrayList<Article>();

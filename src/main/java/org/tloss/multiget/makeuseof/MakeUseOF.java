@@ -155,9 +155,9 @@ public class MakeUseOF  implements AutoGetArticle {
 		return article;
 	}
 
-	public Article[] getAll(String url) throws Exception {
+	public String[] getAllURL(String url) throws Exception {
 
-		ArrayList<Article> articles = new ArrayList<Article>();
+		ArrayList<String> articles = new ArrayList<String>();
 		initHttpClient(httpclient);
 
 		HttpGet httpGetStepOne = new HttpGet(url);
@@ -181,15 +181,15 @@ public class MakeUseOF  implements AutoGetArticle {
 		///article[@class='entry']/div[@class='content']/h1/a
 		List<?> list = document.selectNodes("//section[@id='post-entries']//article[@class='entry']/div[@class='content']/h1/a");
 		String link = "";
-		Article article;
+		String article;
 		for (Object object : list) {
 			Element element = (Element) object;
 			link = element.attributeValue("href");
-			article = get(link);
+			article = link;
 			articles.add(article);
 
 		}
-		Article[] result = new Article[articles.size()];
+		String[] result = new String[articles.size()];
 		articles.toArray(result);
 		return result;
 	}
@@ -212,6 +212,26 @@ public class MakeUseOF  implements AutoGetArticle {
 
 	public String[] getDeafaltListUrl() {
 		return new String[]{"http://www.makeuseof.com/service/windows/"};
+	}
+
+	public Article[] get(String[] url) throws Exception {
+		if (url != null) {
+			ArrayList<Article> articles = new ArrayList<Article>();
+			Article article;
+			for (int i = 0; i < url.length; i++) {
+				article = get(url[i]);
+				articles.add(article);
+			}
+			Article[] result = new Article[articles.size()];
+			articles.toArray(result);
+			return result;
+		}
+		return null;
+	}
+
+	public Article[] getAll(String url) throws Exception {
+		String[] urls = getAllURL(url);
+		return get(urls);
 	}
 
 }
