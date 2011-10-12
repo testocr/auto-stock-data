@@ -4,6 +4,8 @@ import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.http.HttpVersion;
 import org.apache.http.client.HttpClient;
@@ -34,12 +36,15 @@ import org.tloss.common.utils.DerbyDBUtils;
 import org.tloss.multiget.AutoGetArticle;
 import org.tloss.multiget.fortytech.com.FortyTech;
 import org.tloss.multiget.ghacks.GHacks;
+import org.tloss.multiget.instantfundas.com.Instantfundas;
 import org.tloss.multiget.makeuseof.MakeUseOF;
 import org.tloss.multiget.techmixer.com.Techmixer;
+import org.tloss.multiget.techspot.com.Techspot;
 import org.tloss.multipos.PostArticle;
 import org.tloss.translate.google.GoogleTranslate;
 
 public class XHTTPost implements PostArticle {
+	public static Logger logger = Logger.getLogger(XHTTPost.class.getName());
 	HttpClient httpclient = new DefaultHttpClient();
 	ResponseHandler<String> responseHandler = new DefaultResponseHandler();
 
@@ -395,7 +400,6 @@ public class XHTTPost implements PostArticle {
 		if (article.getImages() != null) {
 			for (int i = 0; i < article.getImages().size(); i++) {
 				Image img = article.getImages().get(i);
-				System.out.println(img.hashCode());
 				if (img.hashCode() < 0) {
 					article.setContent(article.getContent().replaceAll(
 							"IMGM" + Math.abs(img.hashCode()), img.toString()));
@@ -403,41 +407,63 @@ public class XHTTPost implements PostArticle {
 					article.setContent(article.getContent().replaceAll(
 							"IMG" + img.hashCode(), img.toString()));
 				}
-				System.out.println(article.getContent());
 			}
 		}
 	}
 
-	public static void main(String[] args) throws Exception {
-		AutoGetArticle[] getArticles = new AutoGetArticle[] { new FortyTech(),
-				new GHacks(), new MakeUseOF(), new Techmixer() };
-		GoogleTranslate googleTranslate = new GoogleTranslate();
-		XHTTPost post = new XHTTPost();
-		post.login("trantung", "z712211z74119");
-		for (int ii = 0; ii < getArticles.length; ii++) {
-			String[] urls = getArticles[ii].getDeafaltListUrl();
-			for (int iii = 0; iii < urls.length; iii++) {
-				Article[] articles = getArticles[ii].getAll(urls[iii]);
-				for (int i = 0; i < articles.length; i++) {
-					Article article = googleTranslate.transalte(articles[i],
-							"en", "vi");
-					if (getArticles[ii].isNew(article.getUrl(), null)) {
-						DerbyDBUtils
-								.save(article.getUrl(), article.getSource());
-						post.proccessIMG(article);
-						String url = "Images/Uploaded/Share/2011/09/2011090104041055/freeburningsoftware.png";
-						if (article.getImages() != null
-								&& article.getImages().size() > 0) {
-							url = article.getImages().get(0).getUrl();
+	public static void main(String[] args) {
+		try {
+			AutoGetArticle[] getArticles = new AutoGetArticle[] {
+					new FortyTech(), new GHacks(), new MakeUseOF(),
+					new Techmixer(), new Techspot(), new Instantfundas() };
+			GoogleTranslate googleTranslate = new GoogleTranslate();
+			XHTTPost post = new XHTTPost();
+			post.login("trantung", "z712211z74119");
+			for (int ii = 0; ii < getArticles.length; ii++) {
+				String[] urls = getArticles[ii].getDeafaltListUrl();
+				for (int iii = 0; iii < urls.length; iii++) {
+					try {
+						logger.info("processing URL: " + urls[iii]);
+						String[] URLs = getArticles[ii].getAllURL(urls[iii]);
+						for (int i = 0; i < URLs.length; i++) {
+							try {
+								if (getArticles[ii].isNew(URLs[i], null)) {
+
+									logger.info("processing new URL: "
+											+ URLs[i]);
+									Article article = getArticles[ii]
+											.get(URLs[i]);
+									article = googleTranslate.transalte(
+											article, "en", "vi");
+
+									post.proccessIMG(article);
+									String url = "Images/Uploaded/Share/2011/09/2011090104041055/freeburningsoftware.png";
+									if (article.getImages() != null
+											&& article.getImages().size() > 0) {
+										url = article.getImages().get(0)
+												.getUrl();
+									}
+									post.post(article,
+											post.getUrl(POST_FORM_URL, null),
+											post.getUrl(POST_URL, null),
+											new Object[] { "tungt84@gmail.com",
+													url, "252" });
+									DerbyDBUtils.save(article.getUrl(),
+											article.getSource());
+								}
+							} catch (Exception e) {
+								logger.log(Level.INFO, "Exception", e);
+							}
 						}
-						post.post(article, post.getUrl(POST_FORM_URL, null),
-								post.getUrl(POST_URL, null), new Object[] {
-										"tungt84@gmail.com", url, "252" });
+					} catch (Exception e) {
+						logger.log(Level.INFO, "Exception", e);
 					}
 				}
 			}
-		}
 
-		post.logout();
+			post.logout();
+		} catch (Exception e) {
+			logger.log(Level.INFO, "Exception", e);
+		}
 	}
 }

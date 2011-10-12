@@ -1,6 +1,7 @@
 package org.tloss.multiget.xhtt;
 
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -56,7 +57,6 @@ public class XHTTGetArticle implements GetArticle {
 				CookiePolicy.BROWSER_COMPATIBILITY);
 	}
 
-	
 	public boolean login(String username, String password) throws Exception {
 		return true;
 	}
@@ -103,13 +103,11 @@ public class XHTTGetArticle implements GetArticle {
 		return new Article(title, content);
 	}
 
-	
 	public void logout() {
 		// TODO Auto-generated method stub
 
 	}
 
-	
 	public boolean login(String username, String password,
 			boolean encrytedPassword, Object[] options) throws Exception {
 		return true;
@@ -161,7 +159,27 @@ public class XHTTGetArticle implements GetArticle {
 	}
 
 	public Article[] getAll(String url) throws Exception {
-		return new Article[]{ get(url) };
+		return new Article[] { get(url) };
+	}
+
+	public Article[] get(String[] url) throws Exception {
+		if (url != null) {
+			ArrayList<Article> articles = new ArrayList<Article>();
+			Article article;
+			for (int i = 0; i < url.length; i++) {
+				article = get(url[i]);
+				articles.add(article);
+			}
+			Article[] result = new Article[articles.size()];
+			articles.toArray(result);
+			return result;
+		}
+		return null;
+	}
+
+	public String[] getAllURL(String url) throws Exception {
+
+		return new String[] { url };
 	}
 
 }
