@@ -102,7 +102,7 @@ public class Techmixer implements AutoGetArticle {
 			data = element.getTextTrim();
 			article.setTitle(data);
 		}
-		list = document.selectNodes("//div[@id='EchoTopic']/p");
+		list = document.selectNodes("//div[@id='EchoTopic']/*[self::p or self::ul]");
 		StringBuffer buffer = new StringBuffer();
 		for (Object object : list) {
 			Element element = (Element) object;
