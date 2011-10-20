@@ -43,6 +43,7 @@ import org.htmlcleaner.PrettyXmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.tloss.common.Article;
 import org.tloss.common.DefaultResponseHandler;
+import org.tloss.common.PasswordUtils;
 import org.tloss.multipos.PostArticle;
 
 /**
@@ -156,7 +157,7 @@ public class MuaCungLoanTin {
 	 * posthash <br/>
 	 * poststarttime<br/>
 	 * loggedinuser 195249<br/>
-	 * sbutton Gởi Ðề Tài Mới<br/>
+	 * sbutton Gá»Ÿi Ã�á»� TÃ i Má»›i<br/>
 	 * parseurl 1<br/>
 	 * emailupdate 9999<br/>
 	 * polloptions 4<br/>
@@ -277,6 +278,7 @@ public class MuaCungLoanTin {
 	}
 
 	public static void main(String[] args) throws Exception {
+		PasswordUtils.loadKeyStore();
 		MuaCungLoanTin cungLoanTin = new MuaCungLoanTin();
 		Properties properties = new Properties();
 		properties.load(new FileInputStream("muachung.properties"));
@@ -289,7 +291,7 @@ public class MuaCungLoanTin {
 			if (i >= passwords.length) {
 				password = "";
 			} else {
-				password = passwords[i];
+				password = PasswordUtils.decryt(passwords[i]);
 			}
 			if (cungLoanTin.login(username, password)) {
 				List<String> collectedLink = new ArrayList<String>();
@@ -311,7 +313,7 @@ public class MuaCungLoanTin {
 					collectedLink = newCollectedLink;
 					newCollectedLink = temp;
 
-				} while (collectedLink.isEmpty() && newCollectedLink.isEmpty());
+				} while (!(collectedLink.isEmpty() && newCollectedLink.isEmpty()));
 			}
 		}
 	}
