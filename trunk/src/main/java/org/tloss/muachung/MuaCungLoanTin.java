@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
@@ -170,6 +171,7 @@ public class MuaCungLoanTin {
 
 		boolean result = false;
 		if (!vistedLink.contains(urlEdit)) {
+			List<String> newCollectedLink = (List<String>) options[0];
 			vistedLink.add(urlEdit);
 			initHttpClient(httpclient);
 
@@ -224,7 +226,10 @@ public class MuaCungLoanTin {
 			for (Object object : list) {
 				Node node = (Node) object;
 				String newUrl = node.getText();
-				post(article, newUrl, urlPost, options);
+				if (!newCollectedLink.contains(newUrl)
+						&& !vistedLink.contains(newCollectedLink)) {
+					newCollectedLink.add(newUrl);
+				}
 			}
 			result = true;
 		}
@@ -287,10 +292,26 @@ public class MuaCungLoanTin {
 				password = passwords[i];
 			}
 			if (cungLoanTin.login(username, password)) {
+				List<String> collectedLink = new ArrayList<String>();
+				List<String> newCollectedLink = new ArrayList<String>();
+				List<String> temp;
 				for (int j = 0; j < startUrls.length; j++) {
 					String startUrl = startUrls[j];
-					cungLoanTin.post(null, startUrl, null, null);
+					collectedLink.add(startUrl);
 				}
+				do {
+					for (Iterator iterator = collectedLink.iterator(); iterator
+							.hasNext();) {
+						String startUrl = (String) iterator.next();
+						cungLoanTin.post(null, startUrl, null,
+								new Object[] { newCollectedLink });
+					}
+					collectedLink.clear();
+					temp = collectedLink;
+					collectedLink = newCollectedLink;
+					newCollectedLink = temp;
+
+				} while (collectedLink.isEmpty() && newCollectedLink.isEmpty());
 			}
 		}
 	}
