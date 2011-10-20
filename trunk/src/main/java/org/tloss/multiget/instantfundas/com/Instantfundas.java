@@ -116,7 +116,7 @@ public class Instantfundas  implements AutoGetArticle {
 			data = element.getTextTrim();
 			article.setTitle(data);
 		}
-		list = document.selectNodes("//div[@id='Blog1']/div[@class='blog-posts']/div[@class='post']/div/div[@class='entry']//*[self::p or self::h2 or self::ol]");
+		list = document.selectNodes("//div[@id='Blog1']/div[@class='blog-posts']/div[@class='post']/div/div[@class='entry']/*[self::p or self::h2 or self::ol]");
 		StringBuffer buffer = new StringBuffer();
 		for (Object object : list) {
 			Element element = (Element) object;
