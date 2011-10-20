@@ -10,7 +10,6 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
@@ -44,7 +43,6 @@ import org.htmlcleaner.TagNode;
 import org.tloss.common.Article;
 import org.tloss.common.DefaultResponseHandler;
 import org.tloss.multipos.PostArticle;
-import org.tloss.translate.google.GoogleTranslate;
 
 /**
  * @author tungt
@@ -56,6 +54,7 @@ public class MuaCungLoanTin {
 	 */
 	public MuaCungLoanTin() {
 		initScriptEngine();
+		vistedLink = new ArrayList<String>();
 	}
 
 	HttpClient httpclient = new DefaultHttpClient();
@@ -137,6 +136,8 @@ public class MuaCungLoanTin {
 		return url;
 	}
 
+	List<String> vistedLink;
+
 	/**
 	 * buoc 0: vao link efit<br/>
 	 * http://haiphongit.com/forum/newthread.php?do=newthread&f=90<br/>
@@ -166,55 +167,67 @@ public class MuaCungLoanTin {
 	 */
 	public boolean post(Article article, String urlEdit, String urlPost,
 			Object[] options) throws Exception {
+
 		boolean result = false;
-		initHttpClient(httpclient);
+		if (!vistedLink.contains(urlEdit)) {
+			vistedLink.add(urlEdit);
+			initHttpClient(httpclient);
 
-		HttpGet httpGetStepOne = new HttpGet(urlEdit);
-		setHeader(httpGetStepOne);
-		String responseBody = httpclient.execute(httpGetStepOne,
-				responseHandler);
-		// System.out.println(responseBody);
-		// lay ra noi dung xml
-		CleanerProperties props = new CleanerProperties();
-		// set some properties to non-default values
-		props.setTranslateSpecialEntities(true);
-		props.setTransResCharsToNCR(true);
-		props.setOmitComments(true);
-		// do parsing
-		TagNode tagNode = new HtmlCleaner(props).clean(new StringReader(
-				responseBody));
-		// serialize to xml file
-		String xml = new PrettyXmlSerializer(props).getAsString(tagNode,
-				"utf-8");
-		// System.out.println(xml);
-		SAXReader reader = new SAXReader();
-		Document document = reader.read(new StringReader(xml));
-		// <input type="hidden" value="0" id="vB_Editor_001_mode"
-		// name="wysiwyg">
-		List<?> list = document.selectNodes("//a[@class='buttonLoantin']");
-		
-		for (Object object : list) {
-			Element element = (Element) object;
-			if (element.attribute("id") != null) {
-				// btnLoantin1300
-				String id = element.attribute("id").getValue();
-				id = id.substring(10);
-				HttpPost httpPost = new HttpPost("http://muachung.vn/ajax.php?act=connect&mccode=check-loantin");
-				
-				List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-				nvps.add(new BasicNameValuePair("item_id", id));
-				nvps.add(new BasicNameValuePair("yahoo", "0"));
-				nvps.add(new BasicNameValuePair("facebook", "1"));
-				nvps.add(new BasicNameValuePair("content", ""));
-				nvps.add(new BasicNameValuePair("rand", String.valueOf(Math.random())));
-				httpPost.setEntity(new UrlEncodedFormEntity(nvps, HTTP.UTF_8));
-				setHeader(httpPost);
-				responseBody = httpclient.execute(httpPost, responseHandler);
-				System.out.println(responseBody);
+			HttpGet httpGetStepOne = new HttpGet(urlEdit);
+			setHeader(httpGetStepOne);
+			String responseBody = httpclient.execute(httpGetStepOne,
+					responseHandler);
+			// System.out.println(responseBody);
+			// lay ra noi dung xml
+			CleanerProperties props = new CleanerProperties();
+			// set some properties to non-default values
+			props.setTranslateSpecialEntities(true);
+			props.setTransResCharsToNCR(true);
+			props.setOmitComments(true);
+			// do parsing
+			TagNode tagNode = new HtmlCleaner(props).clean(new StringReader(
+					responseBody));
+			// serialize to xml file
+			String xml = new PrettyXmlSerializer(props).getAsString(tagNode,
+					"utf-8");
+			// System.out.println(xml);
+			SAXReader reader = new SAXReader();
+			Document document = reader.read(new StringReader(xml));
+			// <input type="hidden" value="0" id="vB_Editor_001_mode"
+			// name="wysiwyg">
+			List<?> list = document.selectNodes("//a[@class='buttonLoantin']");
+			for (Object object : list) {
+				Element element = (Element) object;
+				if (element.attribute("id") != null) {
+					// btnLoantin1300
+					String id = element.attribute("id").getValue();
+					id = id.substring(10);
+					HttpPost httpPost = new HttpPost(
+							"http://muachung.vn/ajax.php?act=connect&mccode=check-loantin");
+
+					List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+					nvps.add(new BasicNameValuePair("item_id", id));
+					nvps.add(new BasicNameValuePair("yahoo", "0"));
+					nvps.add(new BasicNameValuePair("facebook", "1"));
+					nvps.add(new BasicNameValuePair("content", ""));
+					nvps.add(new BasicNameValuePair("rand", String.valueOf(Math
+							.random())));
+					httpPost.setEntity(new UrlEncodedFormEntity(nvps,
+							HTTP.UTF_8));
+					setHeader(httpPost);
+					responseBody = httpclient
+							.execute(httpPost, responseHandler);
+					System.out.println(responseBody);
+				}
 			}
+			list = document.selectNodes("//div[@class='title']/a/@href");
+			for (Object object : list) {
+				Node node = (Node) object;
+				String newUrl = node.getText();
+				post(article, newUrl, urlPost, options);
+			}
+			result = true;
 		}
-
-		result = true;
 
 		return result;
 	}
