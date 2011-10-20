@@ -316,5 +316,6 @@ public class MuaCungLoanTin {
 				} while (!(collectedLink.isEmpty() && newCollectedLink.isEmpty()));
 			}
 		}
+		System.out.println(">>> DONE");
 	}
 }
