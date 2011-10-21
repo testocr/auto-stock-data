@@ -123,7 +123,7 @@ public class Techspot implements AutoGetArticle {
 						Element img = (Element) node;
 
 						Image image = org.tloss.common.utils.Utils.download(
-								"http://www.techspot.com"+img.attributeValue("src"), true,httpclient);
+								"http://www.techspot.com"+img.attributeValue("src"), false,httpclient);
 						article.getImages().add(image);
 						if (image.hashCode() < 0) {
 							buffer.append(" IMGM")

@@ -136,7 +136,7 @@ public class GHacks implements AutoGetArticle {
 							&& node.getNodeType() == Node.ELEMENT_NODE) {
 						Element img = (Element) node;
 
-						Image image = download(img.attributeValue("src"), true);
+						Image image = download(img.attributeValue("src"), false);
 						article.getImages().add(image);
 						if (image.hashCode() < 0) {
 							buffer.append(" IMGM")

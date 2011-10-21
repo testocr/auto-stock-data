@@ -182,9 +182,7 @@ public class XHTTPost implements PostArticle {
 
 	public boolean post(Article article, String urlEdit, String urlPost,
 			Object[] options) throws Exception {
-		// for (Image image : article.getImages()) {
-		// uploadImage(image);
-		// }
+		
 		initHttpClient(httpclient);
 
 		HttpGet httpGetStepOne = new HttpGet(urlEdit);
@@ -374,16 +372,29 @@ public class XHTTPost implements PostArticle {
 		document = reader.read(new StringReader(xml));
 		list = document.selectNodes("//form[@id='form1']//input");
 		MultipartEntity entity = new MultipartEntity();
+		String filename = null;
+		String fileSuff = null;
+		if (image.hashCode() < 0) {
+			fileSuff = "IM" + Math.abs(image.hashCode()) + "I";
+			filename = "IM" + Math.abs(image.hashCode()) + "I"
+					+ UrlUtils.getFileName(image.getUrl());
+		} else {
+			fileSuff = "I" + image.hashCode() + "I";
+			filename = "I" + image.hashCode() + "I"
+					+ UrlUtils.getFileName(image.getUrl());
+		}
 		for (Object object : list) {
 			Element element = (Element) object;
 			if ("file2".equals(element.attributeValue("name"))) {
-				ImageBody fileBody = new ImageBody(image,
-						UrlUtils.getFileName(image.getUrl()));
+				ImageBody fileBody = new ImageBody(image, filename);
 				entity.addPart("file2", fileBody);
+				System.out.println("file2:" + fileBody);
 			} else if (element.attributeValue("name") != null) {
 				StringBody body = new StringBody(
 						element.attributeValue("value") == null ? ""
 								: element.attributeValue("value"));
+				System.out.println(element.attributeValue("name") + ":"
+						+ element.attributeValue("value"));
 				entity.addPart(element.attributeValue("name"), body);
 			}
 		}
@@ -392,6 +403,55 @@ public class XHTTPost implements PostArticle {
 		httpPost.setEntity(entity);
 		setHeader(httpPost);
 		responseBody = httpclient.execute(httpPost, responseHandler);
+		// upload done & refesh
+		httpGetStepOne = new HttpGet(getUrl(IMAGE_POST_FORM_URL_1, null));
+		setHeader(httpGetStepOne);
+		responseBody = httpclient.execute(httpGetStepOne, responseHandler);
+		tagNode = new HtmlCleaner(props).clean(new StringReader(responseBody));
+		// serialize to xml file
+		xml = new PrettyXmlSerializer(props).getAsString(tagNode, "utf-8");
+		reader = new SAXReader();
+		document = reader.read(new StringReader(xml));
+		list = document.selectNodes("//input[@id='postBackArg2']");
+		String postBackArg2 = null;
+		for (Object object : list) {
+			Element element = (Element) object;
+			postBackArg2 = element.attributeValue("value");
+		}
+		list = document
+				.selectNodes("//form[@id='form1']//input[@id='__VIEWSTATE']");
+		String __VIEWSTATE = null;
+		for (Object object : list) {
+			Element element = (Element) object;
+			__VIEWSTATE = element.attributeValue("value");
+		}
+		list = document.selectNodes("//table[@class='gridItems']//input[@name='chk']//@value");
+		String imageLink = null;
+		for (Object object : list) {
+			Node element = (Node) object;
+			if(element.getText().indexOf(fileSuff)>=0){
+				imageLink = element.getText();
+			}
+		}
+		entity = new MultipartEntity();
+		entity.addPart("__EVENTTARGET",new StringBody("btnSaveToShareFolder"));
+		entity.addPart("__EVENTARGUMENT",new StringBody(""));
+		entity.addPart("__VIEWSTATE",new StringBody(__VIEWSTATE));
+		entity.addPart("postBackArg",new StringBody(imageLink));
+		entity.addPart("postBackArg2",new StringBody(postBackArg2));
+		entity.addPart("txtKeyword",new StringBody(""));
+		httpPost = new HttpPost("http://admin.xhtt.vn/GUI/EditoralOffice/MainOffce/FileManager/default.aspx?function=avatar_loadValue&mode=single&share=share");
+		httpPost.setEntity(entity);
+		setHeader(httpPost);
+		responseBody = httpclient.execute(httpPost, responseHandler);
+		int index =responseBody.indexOf("'http://Images.xhtt.vn/Images/Uploaded/Share/");
+		if(index>=0){
+			int index2 = responseBody.indexOf("'",index+1);
+			if(index2 >=0){
+				String url =  responseBody.substring(index+1, index2);
+				image.setUrl2(url);
+			}
+		}
 		return null;
 	}
 
@@ -421,7 +481,7 @@ public class XHTTPost implements PostArticle {
 			properties.load(new FileInputStream("xhtt.properties"));
 			String username = properties.getProperty("username", "");
 			String password = properties.getProperty("passowrd", "");
-			password =  PasswordUtils.decryt(password);
+			password = PasswordUtils.decryt(password);
 			AutoGetArticle[] getArticles = new AutoGetArticle[] {
 					new FortyTech(), new GHacks(), new MakeUseOF(),
 					new Techmixer(), new Techspot(), new Instantfundas() };
@@ -444,13 +504,15 @@ public class XHTTPost implements PostArticle {
 											.get(URLs[i]);
 									article = googleTranslate.transalte(
 											article, "en", "vi");
-
+									for (Image image : article.getImages()) {
+										post.uploadImage(image);
+									}
 									post.proccessIMG(article);
 									String url = "Images/Uploaded/Share/2011/09/2011090104041055/freeburningsoftware.png";
 									if (article.getImages() != null
 											&& article.getImages().size() > 0) {
 										url = article.getImages().get(0)
-												.getUrl();
+												.getUrl2().substring(21);
 									}
 									post.post(article,
 											post.getUrl(POST_FORM_URL, null),

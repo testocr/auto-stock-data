@@ -20,6 +20,10 @@ public class UrlUtils {
 			} else {
 				result = url;
 			}
+			index =  result.lastIndexOf("?");
+			if (index > 0) {
+				result = result.substring(0,index);
+			}
 		}
 		return result;
 	}
