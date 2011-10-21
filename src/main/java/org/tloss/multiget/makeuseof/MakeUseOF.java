@@ -127,7 +127,7 @@ public class MakeUseOF  implements AutoGetArticle {
 						Element img = (Element) node;
 
 						Image image = org.tloss.common.utils.Utils.download(
-								img.attributeValue("src"), true,httpclient);
+								img.attributeValue("src"), false,httpclient);
 						article.getImages().add(image);
 						if (image.hashCode() < 0) {
 							buffer.append(" IMGM")

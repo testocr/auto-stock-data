@@ -14,10 +14,19 @@ import java.util.Arrays;
  */
 public class Image {
 	public String url;
+	public String url2;
 	public byte[] data;
 
 	public String getUrl() {
 		return url;
+	}
+
+	public String getUrl2() {
+		return url2;
+	}
+
+	public void setUrl2(String url2) {
+		this.url2 = url2;
 	}
 
 	public void setUrl(String url) {
@@ -60,7 +69,8 @@ public class Image {
 
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
-		buffer.append("<img src=\"").append(url).append("\" />");
+		buffer.append("<img src=\"").append(url2 != null ? url2 : url)
+				.append("\" />");
 		return buffer.toString();
 	}
 }

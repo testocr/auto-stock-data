@@ -136,7 +136,7 @@ public class Instantfundas  implements AutoGetArticle {
 							&& node.getNodeType() == Node.ELEMENT_NODE) {
 						Element img = (Element) node;
 
-						Image image = download(img.attributeValue("src"), true);
+						Image image = download(img.attributeValue("src"), false);
 						article.getImages().add(image);
 						if (image.hashCode() < 0) {
 							buffer.append(" IMGM")
@@ -215,7 +215,7 @@ public class Instantfundas  implements AutoGetArticle {
 	}
 
 	public String[] getDeafaltListUrl() {
-		return new String[] { "http://www.instantfundas.com/search/label/Windows?&max-results=10" };
+		return new String[] { "http://www.instantfundas.com/search/label/Windows?&max-results=10","http://www.instantfundas.com/search/label/Tutorials%20n%20Tips?&max-results=10" };
 	}
 
 	public Article[] get(String[] url) throws Exception {
