@@ -133,7 +133,7 @@ public class DDTH implements PostArticle {
 	 * posthash <br/>
 	 * poststarttime<br/>
 	 * loggedinuser 195249<br/>
-	 * sbutton Gởi Ðề Tài Mới<br/>
+	 * sbutton Gá»Ÿi Ã�á»� TÃ i Má»›i<br/>
 	 * parseurl 1<br/>
 	 * emailupdate 9999<br/>
 	 * polloptions 4<br/>
@@ -271,7 +271,7 @@ public class DDTH implements PostArticle {
 		nvps.add(new BasicNameValuePair("posthash", posthash));
 		nvps.add(new BasicNameValuePair("poststarttime", poststarttime));
 		nvps.add(new BasicNameValuePair("loggedinuser", loggedinuser));
-		nvps.add(new BasicNameValuePair("sbutton", "Gởi Ðề Tài Mới"));
+		nvps.add(new BasicNameValuePair("sbutton", "Gá»Ÿi Ã�á»� TÃ i Má»›i"));
 		nvps.add(new BasicNameValuePair("parseurl", "1"));
 		nvps.add(new BasicNameValuePair("emailupdate", "9999"));
 		nvps.add(new BasicNameValuePair("polloptions", "4"));
@@ -416,14 +416,14 @@ public class DDTH implements PostArticle {
 	public static void main(String[] args) throws Exception {
 
 		DDTH article = new DDTH();
-		article.login("myname74119", "z712211z74119", true, new Object[] { "",
+		article.login("myname74119", "", true, new Object[] { "",
 				"" });
 		// 3 -Software Area -System Tools
 
 		XHTTGetArticle getArticle = new XHTTGetArticle();
 		Article article2 = getArticle
 				.get("http://xahoithongtin.com.vn/2011061508031456p0c252/filerfrog-thanh-phan-mo-rong-tuyet-voi-cho-windows-explorer.htm");
-		article2.setContent(article2.getContent() + "Nguồn XHTT ");
+		article2.setContent(article2.getContent() + "Nguá»“n XHTT ");
 		// System.out.println(article2.getTitle());
 		// System.out.println(article2.getContent());
 		article.post(
