@@ -239,7 +239,20 @@ public class MuaCungLoanTin {
 	}
 
 	public void logout() {
+		try {
+			initHttpClient(httpclient);
+			HttpPost httpPost = new HttpPost(
+					"http://muachung.vn/ajax.php?act=customer&code=logout");
+			List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+			nvps.add(new BasicNameValuePair("rand", String.valueOf(Math
+					.random())));
+			httpPost.setEntity(new UrlEncodedFormEntity(nvps));
+			setHeader(httpPost);
+			String responseBody = httpclient.execute(httpPost, responseHandler);
+			System.out.println(responseBody);
+		} catch (Exception e) {
 
+		}
 	}
 
 	public boolean login(String username, String password,
@@ -313,7 +326,9 @@ public class MuaCungLoanTin {
 					collectedLink = newCollectedLink;
 					newCollectedLink = temp;
 
-				} while (!(collectedLink.isEmpty() && newCollectedLink.isEmpty()));
+				} while (!(collectedLink.isEmpty() && newCollectedLink
+						.isEmpty()));
+				cungLoanTin.logout();
 			}
 		}
 		System.out.println(">>> DONE");
