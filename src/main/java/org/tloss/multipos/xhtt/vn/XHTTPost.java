@@ -1,9 +1,11 @@
 package org.tloss.multipos.xhtt.vn;
 
+import java.io.FileInputStream;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,6 +33,7 @@ import org.tloss.common.Article;
 import org.tloss.common.DefaultResponseHandler;
 import org.tloss.common.Image;
 import org.tloss.common.ImageBody;
+import org.tloss.common.PasswordUtils;
 import org.tloss.common.UrlUtils;
 import org.tloss.common.utils.DerbyDBUtils;
 import org.tloss.multiget.AutoGetArticle;
@@ -413,12 +416,18 @@ public class XHTTPost implements PostArticle {
 
 	public static void main(String[] args) {
 		try {
+			PasswordUtils.loadKeyStore();
+			Properties properties = new Properties();
+			properties.load(new FileInputStream("xhtt.properties"));
+			String username = properties.getProperty("username", "");
+			String password = properties.getProperty("passowrd", "");
+			password =  PasswordUtils.decryt(password);
 			AutoGetArticle[] getArticles = new AutoGetArticle[] {
 					new FortyTech(), new GHacks(), new MakeUseOF(),
 					new Techmixer(), new Techspot(), new Instantfundas() };
 			GoogleTranslate googleTranslate = new GoogleTranslate();
 			XHTTPost post = new XHTTPost();
-			post.login("trantung", "z712211z74119");
+			post.login(username, password);
 			for (int ii = 0; ii < getArticles.length; ii++) {
 				String[] urls = getArticles[ii].getDeafaltListUrl();
 				for (int iii = 0; iii < urls.length; iii++) {

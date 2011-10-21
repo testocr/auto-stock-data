@@ -6,10 +6,12 @@
  */
 package org.tloss.zingdeal;
 
+import java.io.FileInputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.http.HttpVersion;
 import org.apache.http.NameValuePair;
@@ -35,6 +37,7 @@ import org.htmlcleaner.PrettyXmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.tloss.common.Article;
 import org.tloss.common.DefaultResponseHandler;
+import org.tloss.common.PasswordUtils;
 import org.tloss.multipos.PostArticle;
 
 /**
@@ -138,7 +141,7 @@ public class ZingDeal {
 	 * posthash <br/>
 	 * poststarttime<br/>
 	 * loggedinuser 195249<br/>
-	 * sbutton Gởi Ðề Tài Mới<br/>
+	 * sbutton Gá»Ÿi Ã�á»� TÃ i Má»›i<br/>
 	 * parseurl 1<br/>
 	 * emailupdate 9999<br/>
 	 * polloptions 4<br/>
@@ -157,8 +160,8 @@ public class ZingDeal {
 		setHeader(httpGetStepOne);
 		String responseBody = httpclient.execute(httpGetStepOne,
 				responseHandler);
-		// responseBody =responseBody.replaceAll("&quot;TÃ¡m&quot;", "Tam");
-		responseBody = responseBody.replaceAll("\"TÃ¡m\"", "Tam");
+		// responseBody =responseBody.replaceAll("&quot;TÃƒÂ¡m&quot;", "Tam");
+		responseBody = responseBody.replaceAll("\"TÃƒÂ¡m\"", "Tam");
 
 		// System.out.println(responseBody);
 		// lay ra noi dung xml
@@ -336,24 +339,34 @@ public class ZingDeal {
 							+ username);
 			setHeader(httpGetStepOne);
 			responseBody = httpclient.execute(httpGetStepOne, responseHandler);
-			result = responseBody.indexOf("users/logout") >= 0;
+			System.out.println(responseBody);
+			result = (responseBody.indexOf("/tp-ho-chi-minh/users/login") < 0);
 		}
 		return result;
 	}
 
 	public static void main(String[] args) throws Exception {
-
+		PasswordUtils.loadKeyStore();
 		ZingDeal article = new ZingDeal();
-		System.out.println(article.login("phale0101856", "170584", true,
-				new Object[] { "", "" }));
-		// article.post(
-		// null,
-		// "http://deal.zing.vn/tp-ho-chi-minh/deal/tam-thoai-mai-cung-ban-be-va-nguoi-than-chi-5000d-1",
-		// null, null);
-		article.post(
-				null,
-				"http://deal.zing.vn/tp-ho-chi-minh/deal/40000d-cung-nham-nhi-cafe-gap-go-ban-be-giua-khong-gian-phap-tai-vendome",
-				null, new Object[] { "446852" });
+		Properties properties = new Properties();
+		properties.load(new FileInputStream("zingdeal.properties"));
+		String username = properties.getProperty("username", "");
+		String password = properties.getProperty("passowrd", "");
+		password = PasswordUtils.decryt(password);
+		String userid = properties.getProperty("userid", "");
+		String url = properties.getProperty("url", "");
+		System.out.println(url);
+		if (article.login(username, password, true, new Object[] { "", "" })) {
+			try {
+				while (true) {
+					article.post(null, url, null, new Object[] { userid });
+				}
+			} catch (Exception e) {
+				System.out.println("exception");
+				e.printStackTrace();
+			}
 
+		}
+		System.out.println("DONE >>");
 	}
 }
