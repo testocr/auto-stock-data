@@ -512,7 +512,7 @@ public class XHTTPost implements PostArticle {
 									if (article.getImages() != null
 											&& article.getImages().size() > 0) {
 										url = article.getImages().get(0)
-												.getUrl2().substring(21);
+												.getUrl2().substring(22);
 									}
 									post.post(article,
 											post.getUrl(POST_FORM_URL, null),
