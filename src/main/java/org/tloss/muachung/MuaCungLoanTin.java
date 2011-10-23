@@ -210,8 +210,8 @@ public class MuaCungLoanTin {
 
 					List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 					nvps.add(new BasicNameValuePair("item_id", id));
-					nvps.add(new BasicNameValuePair("yahoo", "0"));
-					nvps.add(new BasicNameValuePair("facebook", "1"));
+					nvps.add(new BasicNameValuePair("yahoo", (String)options[2]));
+					nvps.add(new BasicNameValuePair("facebook", (String)options[1]));
 					nvps.add(new BasicNameValuePair("content", ""));
 					nvps.add(new BasicNameValuePair("rand", String.valueOf(Math
 							.random())));
@@ -298,6 +298,8 @@ public class MuaCungLoanTin {
 		String[] usernames = properties.getProperty("username", "").split(",");
 		String[] passwords = properties.getProperty("passowrd", "").split(",");
 		String[] startUrls = properties.getProperty("startUrl", "").split(",");
+		String facebook = properties.getProperty("facebook", "0");
+		String yahoo = properties.getProperty("yahoo", "1");
 		for (int i = 0; i < usernames.length; i++) {
 			String username = usernames[i];
 			String password;
@@ -319,7 +321,7 @@ public class MuaCungLoanTin {
 							.hasNext();) {
 						String startUrl = (String) iterator.next();
 						cungLoanTin.post(null, startUrl, null,
-								new Object[] { newCollectedLink });
+								new Object[] { newCollectedLink,facebook,yahoo });
 					}
 					collectedLink.clear();
 					temp = collectedLink;
