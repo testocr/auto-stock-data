@@ -295,7 +295,12 @@ public class MuaCungLoanTin {
 		MuaCungLoanTin cungLoanTin = new MuaCungLoanTin();
 		Properties properties = new Properties();
 		properties.load(new FileInputStream("muachung.properties"));
-		String[] usernames = properties.getProperty("username", "").split(",");
+		String[] usernames = null;
+		if(args!=null&& args.length>=1){
+			usernames = new String[]{args[0]};
+		}else{
+			usernames = properties.getProperty("username", "").split(",");
+		}
 		String[] passwords = properties.getProperty("passowrd", "").split(",");
 		String[] startUrls = properties.getProperty("startUrl", "").split(",");
 		String facebook = properties.getProperty("facebook", "0");

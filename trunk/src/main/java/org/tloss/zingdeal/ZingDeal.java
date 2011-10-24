@@ -6,6 +6,7 @@
  */
 package org.tloss.zingdeal;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -154,130 +155,154 @@ public class ZingDeal {
 	public boolean post(Article article, String urlEdit, String urlPost,
 			Object[] options) throws Exception {
 		boolean result = false;
+
 		initHttpClient(httpclient);
-
-		HttpGet httpGetStepOne = new HttpGet(urlEdit);
-		setHeader(httpGetStepOne);
-		String responseBody = httpclient.execute(httpGetStepOne,
-				responseHandler);
-		// responseBody =responseBody.replaceAll("&quot;TÃƒÂ¡m&quot;", "Tam");
-		responseBody = responseBody.replaceAll("\"TÃƒÂ¡m\"", "Tam");
-
-		// System.out.println(responseBody);
-		// lay ra noi dung xml
+		String searchLink = null;
 		CleanerProperties props = new CleanerProperties();
 		// set some properties to non-default values
 		props.setTranslateSpecialEntities(true);
 		props.setTransResCharsToNCR(true);
 		props.setOmitComments(true);
-		// do parsing
-		TagNode tagNode = new HtmlCleaner(props).clean(new StringReader(
-				responseBody));
-		// serialize to xml file
-		String xml = new PrettyXmlSerializer(props).getAsString(tagNode,
-				"utf-8");
-		// System.out.println(xml);
-		SAXReader reader = new SAXReader();
-		Document document = reader.read(new StringReader(xml));
-		// <input type="hidden" value="0" id="vB_Editor_001_mode"
-		// name="wysiwyg">
-		List<?> list = document.selectNodes("//div[@class='MuaDeal']/a");
-		String link = null;
-		for (Object object : list) {
-			Element element = (Element) object;
-			if (element.attribute("href") != null) {
-				if (link == null)
-					link = element.attribute("href").getValue();
-			}
-		}
-		if (!"#this".equals(link)) {
-			httpGetStepOne = new HttpGet("http://deal.zing.vn" + link);
-			setHeader(httpGetStepOne);
-			responseBody = httpclient.execute(httpGetStepOne, responseHandler);
-			tagNode = new HtmlCleaner(props).clean(new StringReader(
-					responseBody));
-			// serialize to xml file
-			xml = new PrettyXmlSerializer(props).getAsString(tagNode, "utf-8");
-			// System.out.println(xml);
-			reader = new SAXReader();
-			document = reader.read(new StringReader(xml));
-			list = document.selectNodes("//form[@id='DealBuyForm']");
-			for (Object object : list) {
-				Element element = (Element) object;
-				if (element.attribute("action") != null) {
+		while (!isStop()) {
+			if (searchLink == null) {
+				HttpGet httpGetStepOne = new HttpGet(urlEdit);
+				setHeader(httpGetStepOne);
+				String responseBody = httpclient.execute(httpGetStepOne,
+						responseHandler);
+				// responseBody =responseBody.replaceAll("&quot;TÃƒÂ¡m&quot;",
+				// "Tam");
+				responseBody = responseBody.replaceAll("\"TÃƒÂ¡m\"", "Tam");
 
-					link = element.attribute("action").getValue();
-				}
-				HttpPost httpPost = new HttpPost("http://deal.zing.vn" + link);
-				List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-				List<?> list2 = element
-						.selectNodes("//form[@id='DealBuyForm']//input");
-				for (Object object2 : list2) {
-					Element element2 = (Element) object2;
-					if (element2.attribute("name") != null
-							&& element2.attribute("value") != null) {
-						if (element2.attribute("id") != null
-								&& ("DealPaymentTypeIdTmp6".equals(element2
-										.attribute("id").getValue()) || "DealPaymentTypeId6"
-										.equals(element2.attribute("id")
-												.getValue()))) {
+				// System.out.println(responseBody);
+				// lay ra noi dung xml
 
-						} else if ("data[Deal][user_id]".equals(element2
-								.attribute("name").getValue())) {
-							nvps.add(new BasicNameValuePair(element2.attribute(
-									"name").getValue(), (String) options[0]));
-							System.out.println(element2.attribute("name")
-									.getValue() + " : " + (String) options[0]);
-						} else {
-
-							nvps.add(new BasicNameValuePair(element2.attribute(
-									"name").getValue(), element2.attribute(
-									"value").getValue()));
-							System.out.println(element2.attribute("name")
-									.getValue()
-									+ " : "
-									+ element2.attribute("value").getValue());
-						}
+				// do parsing
+				TagNode tagNode = new HtmlCleaner(props)
+						.clean(new StringReader(responseBody));
+				// serialize to xml file
+				String xml = new PrettyXmlSerializer(props).getAsString(
+						tagNode, "utf-8");
+				// System.out.println(xml);
+				SAXReader reader = new SAXReader();
+				Document document = reader.read(new StringReader(xml));
+				// <input type="hidden" value="0" id="vB_Editor_001_mode"
+				// name="wysiwyg">
+				List<?> list = document
+						.selectNodes("//div[@class='MuaDeal']/a");
+				String link = null;
+				for (Object object : list) {
+					Element element = (Element) object;
+					if (element.attribute("href") != null) {
+						if (link == null)
+							link = element.attribute("href").getValue();
 					}
-
 				}
-				list2 = element
-						.selectNodes("//form[@id='DealBuyForm']//select");
-				for (Object object2 : list2) {
-					Element element2 = (Element) object2;
-					if (element2.attribute("name") != null) {
-						Iterator<?> iterator = element2.nodeIterator();
-						for (; iterator.hasNext();) {
-							Node ele3 = (Node) iterator.next();
-							if (ele3 instanceof Element) {
-								Element element3 = (Element) ele3;
-								if (element3.attribute("selected") != null
-										&& "selected".equals(element3
-												.attribute("selected")
-												.getValue())
-										&& element3.attribute("value") != null) {
-									nvps.add(new BasicNameValuePair(element2
-											.attribute("name").getValue(),
-											element3.attribute("value")
-													.getValue()));
-									System.out.println(element2.attribute(
-											"name").getValue()
-											+ " : "
-											+ element3.attribute("value")
-													.getValue());
+				if (!"#this".equals(link)) {
+					searchLink = link;
+				}
+			}
+			if (searchLink != null) {
+				String link = searchLink;
+				HttpGet httpGetStepOne = new HttpGet("http://deal.zing.vn"
+						+ link);
+				setHeader(httpGetStepOne);
+				String responseBody = httpclient.execute(httpGetStepOne,
+						responseHandler);
+				TagNode tagNode = new HtmlCleaner(props)
+						.clean(new StringReader(responseBody));
+				// serialize to xml file
+				String xml = new PrettyXmlSerializer(props).getAsString(
+						tagNode, "utf-8");
+				// System.out.println(xml);
+				SAXReader reader = new SAXReader();
+				Document document = reader.read(new StringReader(xml));
+				List<?> list = document
+						.selectNodes("//form[@id='DealBuyForm']");
+				for (Object object : list) {
+					Element element = (Element) object;
+					if (element.attribute("action") != null) {
+
+						link = element.attribute("action").getValue();
+					}
+					HttpPost httpPost = new HttpPost("http://deal.zing.vn"
+							+ link);
+					List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+					List<?> list2 = element
+							.selectNodes("//form[@id='DealBuyForm']//input");
+					for (Object object2 : list2) {
+						Element element2 = (Element) object2;
+						if (element2.attribute("name") != null
+								&& element2.attribute("value") != null) {
+							if (element2.attribute("id") != null
+									&& ("DealPaymentTypeIdTmp6".equals(element2
+											.attribute("id").getValue()) || "DealPaymentTypeId6"
+											.equals(element2.attribute("id")
+													.getValue()))) {
+
+							} else if ("data[Deal][user_id]".equals(element2
+									.attribute("name").getValue())) {
+								nvps.add(new BasicNameValuePair(element2
+										.attribute("name").getValue(),
+										(String) options[0]));
+								System.out.println(element2.attribute("name")
+										.getValue()
+										+ " : "
+										+ (String) options[0]);
+							} else {
+
+								nvps.add(new BasicNameValuePair(element2
+										.attribute("name").getValue(), element2
+										.attribute("value").getValue()));
+								System.out.println(element2.attribute("name")
+										.getValue()
+										+ " : "
+										+ element2.attribute("value")
+												.getValue());
+							}
+						}
+
+					}
+					list2 = element
+							.selectNodes("//form[@id='DealBuyForm']//select");
+					for (Object object2 : list2) {
+						Element element2 = (Element) object2;
+						if (element2.attribute("name") != null) {
+							Iterator<?> iterator = element2.nodeIterator();
+							for (; iterator.hasNext();) {
+								Node ele3 = (Node) iterator.next();
+								if (ele3 instanceof Element) {
+									Element element3 = (Element) ele3;
+									if (element3.attribute("selected") != null
+											&& "selected".equals(element3
+													.attribute("selected")
+													.getValue())
+											&& element3.attribute("value") != null) {
+										nvps.add(new BasicNameValuePair(
+												element2.attribute("name")
+														.getValue(), element3
+														.attribute("value")
+														.getValue()));
+										System.out.println(element2.attribute(
+												"name").getValue()
+												+ " : "
+												+ element3.attribute("value")
+														.getValue());
+									}
 								}
 							}
 						}
+
 					}
 
+					httpPost.setEntity(new UrlEncodedFormEntity(nvps,
+							HTTP.UTF_8));
+					setHeader(httpPost);
+					responseBody = httpclient
+							.execute(httpPost, responseHandler);
+					System.out.println(responseBody);
 				}
 
-				httpPost.setEntity(new UrlEncodedFormEntity(nvps, HTTP.UTF_8));
-				setHeader(httpPost);
-				responseBody = httpclient.execute(httpPost, responseHandler);
-				System.out.println(responseBody);
 			}
-
 		}
 		return result;
 	}
@@ -289,6 +314,7 @@ public class ZingDeal {
 	public boolean login(String username, String password,
 			boolean encrytedPassword, Object[] options) throws Exception {
 		boolean result = false;
+
 		initHttpClient(httpclient);
 
 		HttpGet httpGetStepOne = new HttpGet(getUrl(PostArticle.LOGIN_FORM_URL,
@@ -339,10 +365,15 @@ public class ZingDeal {
 							+ username);
 			setHeader(httpGetStepOne);
 			responseBody = httpclient.execute(httpGetStepOne, responseHandler);
-			System.out.println(responseBody);
 			result = (responseBody.indexOf("/tp-ho-chi-minh/users/login") < 0);
 		}
 		return result;
+	}
+
+	File file = new File("stop");
+
+	public boolean isStop() {
+		return file.exists();
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -356,17 +387,17 @@ public class ZingDeal {
 		String userid = properties.getProperty("userid", "");
 		String url = properties.getProperty("url", "");
 		System.out.println(url);
-		if (article.login(username, password, true, new Object[] { "", "" })) {
-			try {
-				while (true) {
-					article.post(null, url, null, new Object[] { userid });
-				}
-			} catch (Exception e) {
-				System.out.println("exception");
-				e.printStackTrace();
-			}
-
+		while (!article
+				.login(username, password, true, new Object[] { "", "" })) {
 		}
+		try {
+
+			article.post(null, url, null, new Object[] { userid });
+		} catch (Exception e) {
+			System.out.println("exception");
+			e.printStackTrace();
+		}
+
 		System.out.println("DONE >>");
 	}
 }
