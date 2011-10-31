@@ -88,7 +88,7 @@ public class Vatgia {
 
 	}
 
-	public void sendRequest(String startUrl) throws Exception {
+	public synchronized void sendRequest(String startUrl) throws Exception {
 		if (counter < maxRequest) {
 			initHttpClient(httpclient);
 			HttpGet httpGetStepOne = new HttpGet(startUrl);
@@ -117,6 +117,7 @@ public class Vatgia {
 				setHeader(httpGetStepOne);
 				httpclient.execute(httpGetStepOne, responseHandler);
 				counter++;
+				wait(10000);
 			}
 		}
 	}
