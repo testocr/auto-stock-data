@@ -117,12 +117,19 @@ public class Vatgia {
 				setHeader(httpGetStepOne);
 				httpclient.execute(httpGetStepOne, responseHandler);
 				counter++;
-				wait(10000);
+				mustWait();
 			}
 		}
 	}
 
-	public ArrayList<String> getUrls(String startUrl) throws Exception {
+	public synchronized void mustWait() throws InterruptedException {
+		long max =  10;
+		long size = 10;
+		long real =  Math.round(max +size*Math.random());
+		wait(real);
+	}
+	public void getUrls(String startUrl, ArrayList<String> arr)
+			throws Exception {
 		initHttpClient(httpclient);
 		HttpGet httpGetStepOne = new HttpGet(startUrl);
 		setHeader(httpGetStepOne);
@@ -144,15 +151,18 @@ public class Vatgia {
 		Document document = reader.read(new StringReader(xml));
 		List<?> list = document
 				.selectNodes("//div[@class='content']/ul[@class='list_category']/li[@class='fl']/a/@href");
-		ArrayList<String> arr = new ArrayList<String>();
-		for (int i = 0; i < list.size(); i++) {
-			Node node = (Node) list.get(i);
-			String link = node.getText();
-			String[] tmp = link.split("/");
-			arr.add(tmp[1]);
-			// 317/may-tinh-laptop.html
+		if (list.isEmpty()) {
+			// http://www.vatgia.com/392/may-tinh-linh-kien.html
+			String[] temp = startUrl.split("/");
+			arr.add(temp[3]);
+		} else {
+			for (int i = 0; i < list.size(); i++) {
+				Node node = (Node) list.get(i);
+				String link = node.getText();
+				mustWait();
+				getUrls("http://www.vatgia.com" + link, arr);
+			}
 		}
-		return arr;
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -167,12 +177,16 @@ public class Vatgia {
 		vatgia.setMaxRequest(maxReq);
 		String[] startUrls = properties.getProperty("startUrl", "").split(",");
 		password = PasswordUtils.decryt(password);
+		ArrayList<String> urls = new ArrayList<String>();
 		if (vatgia.login(username, password)) {
+			vatgia.mustWait();
 			for (int i = 0; i < startUrls.length; i++) {
 				try {
-					ArrayList<String> urls = vatgia.getUrls(startUrls[i]);
+					urls.clear();
+					vatgia.getUrls(startUrls[i], urls);
 					for (int j = 0; j < urls.size(); j++) {
-						vatgia.sendRequest("http://www.vatgia.com/home/listudv.php?module=product&iCat="+urls.get(j));
+						vatgia.sendRequest("http://www.vatgia.com/home/listudv.php?module=product&iCat="
+								+ urls.get(j));
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
