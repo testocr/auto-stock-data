@@ -171,7 +171,7 @@ public class Vatgia {
 		Properties properties = new Properties();
 		properties.load(new FileInputStream("vatgia.properties"));
 		String username = properties.getProperty("username", "");
-		String password = properties.getProperty("passowrd", "");
+		String password = properties.getProperty("password", "");
 		String maxRequest = properties.getProperty("maxRequest", "500");
 		int maxReq = Integer.parseInt(maxRequest);
 		vatgia.setMaxRequest(maxReq);
