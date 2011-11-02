@@ -148,7 +148,7 @@ public class Vatgia {
 		long real = Math.round(max + size * Math.random());
 		wait(real * 1000);
 	}
-
+	long currentMoney = -1;
 	public void getBonus(String content) throws ScriptException,
 			NoSuchMethodException, ClientProtocolException, IOException,
 			InterruptedException {
@@ -177,6 +177,12 @@ public class Vatgia {
 							if(index5>0){
 								String amount = responseBody.substring(index4+23,index5);
 								System.out.println(amount);
+								long lamount =  Long.parseLong(amount.replaceAll("\\.",""));
+								if(lamount> currentMoney){
+									currentMoney = lamount;
+								}else{
+									System.exit(0);
+								}
 							}
 						}
 					}
@@ -234,6 +240,7 @@ public class Vatgia {
 	}
 
 	public static void main(String[] args) throws Exception {
+		
 		Vatgia vatgia = new Vatgia();
 		PasswordUtils.loadKeyStore();
 		Properties properties = new Properties();
