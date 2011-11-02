@@ -123,7 +123,8 @@ public class Vatgia {
 				httpGetStepOne = new HttpGet("http://www.vatgia.com"
 						+ node.getText());
 				setHeader(httpGetStepOne);
-				responseBody = httpclient.execute(httpGetStepOne, responseHandler);
+				responseBody = httpclient.execute(httpGetStepOne,
+						responseHandler);
 				tagNode = new HtmlCleaner(props).clean(new StringReader(
 						responseBody));
 				xml = new PrettyXmlSerializer(props).getAsString(tagNode,
@@ -142,17 +143,23 @@ public class Vatgia {
 		long real = Math.round(max + size * Math.random());
 		wait(real * 1000);
 	}
+
 	public synchronized void mustWaitMin() throws InterruptedException {
 		long max = 2;
 		long size = 2;
 		long real = Math.round(max + size * Math.random());
 		wait(real * 1000);
 	}
+
 	long currentMoney = -1;
+	long tryCount = 0;
+	long maxTryCount = 5;
+
 	public void getBonus(String content) throws ScriptException,
 			NoSuchMethodException, ClientProtocolException, IOException,
 			InterruptedException {
 		mustWaitMin();
+
 		int index = content.indexOf("/ajax_v2/bonus/");
 		if (index > 0) {
 			int index2 = content.indexOf(";", index);
@@ -161,28 +168,42 @@ public class Vatgia {
 				int index3 = sub.lastIndexOf("<![CDATA[");
 				if (index3 > 0) {
 					String js = sub.substring(index3 + 9);
-					js ="function getBonus(){ " +js +" return src_script + '.js'; }";
+					js = "function getBonus(){ " + js
+							+ " return src_script + '.js'; }";
 					invocableEngine.eval(js);
-					Object object= ((Invocable)invocableEngine ).invokeFunction("getBonus", new Object[]{});
-					String link = "http://vatgia.com"+object;
+					Object object = ((Invocable) invocableEngine)
+							.invokeFunction("getBonus", new Object[] {});
+					String link = "http://vatgia.com" + object;
 					initHttpClient(httpclient);
 					HttpGet httpGetStepOne = new HttpGet(link);
 					setHeader(httpGetStepOne);
 					String responseBody = httpclient.execute(httpGetStepOne,
 							responseHandler);
-					if(responseBody!=null){
-						int index4 = responseBody.indexOf("<b style=\"color: red;\">");
-						if(index4>0){
+					if (responseBody != null) {
+						int index4 = responseBody
+								.indexOf("<b style=\"color: red;\">");
+						if (index4 > 0) {
+							if (tryCount < maxRequest) {
+								tryCount = 0;
+							}
 							int index5 = responseBody.indexOf("</b>");
-							if(index5>0){
-								String amount = responseBody.substring(index4+23,index5);
+							if (index5 > 0) {
+								String amount = responseBody.substring(
+										index4 + 23, index5);
 								System.out.println(amount);
-								long lamount =  Long.parseLong(amount.replaceAll("\\.",""));
-								if(lamount> currentMoney){
+								long lamount = Long.parseLong(amount
+										.replaceAll("\\.", ""));
+								if (lamount > currentMoney) {
 									currentMoney = lamount;
-								}else{
+								} else {
 									System.exit(0);
 								}
+							}
+						} else {
+							if (tryCount < maxTryCount) {
+								tryCount++;
+							} else {
+								System.exit(0);
 							}
 						}
 					}
@@ -240,7 +261,7 @@ public class Vatgia {
 	}
 
 	public static void main(String[] args) throws Exception {
-		
+
 		Vatgia vatgia = new Vatgia();
 		PasswordUtils.loadKeyStore();
 		Properties properties = new Properties();
