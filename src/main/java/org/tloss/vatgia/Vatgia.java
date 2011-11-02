@@ -3,11 +3,17 @@ package org.tloss.vatgia;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 import org.apache.http.HttpVersion;
 import org.apache.http.client.ClientProtocolException;
@@ -32,6 +38,7 @@ import org.htmlcleaner.PrettyXmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.tloss.common.DefaultResponseHandler;
 import org.tloss.common.PasswordUtils;
+import org.tloss.muachung.MuaCungLoanTin;
 
 public class Vatgia {
 	HttpClient httpclient = new DefaultHttpClient();
@@ -40,7 +47,7 @@ public class Vatgia {
 	int maxRequest;
 
 	public Vatgia() {
-
+		initScriptEngine();
 	}
 
 	public void setMaxRequest(int maxRequest) {
@@ -109,13 +116,19 @@ public class Vatgia {
 					"utf-8");
 			SAXReader reader = new SAXReader();
 			Document document = reader.read(new StringReader(xml));
+			getBonus(xml);
 			List<?> list = document.selectNodes("//div[@class='name']/a/@href");
 			for (int i = 0; i < list.size(); i++) {
 				Node node = (Node) list.get(i);
 				httpGetStepOne = new HttpGet("http://www.vatgia.com"
 						+ node.getText());
 				setHeader(httpGetStepOne);
-				httpclient.execute(httpGetStepOne, responseHandler);
+				responseBody = httpclient.execute(httpGetStepOne, responseHandler);
+				tagNode = new HtmlCleaner(props).clean(new StringReader(
+						responseBody));
+				xml = new PrettyXmlSerializer(props).getAsString(tagNode,
+						"utf-8");
+				getBonus(xml);
 				counter++;
 				mustWait();
 			}
@@ -123,11 +136,55 @@ public class Vatgia {
 	}
 
 	public synchronized void mustWait() throws InterruptedException {
-		long max =  10;
-		long size = 10;
-		long real =  Math.round(max +size*Math.random());
-		wait(real);
+		long max = 5;
+		long size = 6;
+		long real = Math.round(max + size * Math.random());
+		wait(real * 1000);
 	}
+	public synchronized void mustWaitMin() throws InterruptedException {
+		long max = 2;
+		long size = 2;
+		long real = Math.round(max + size * Math.random());
+		wait(real * 1000);
+	}
+
+	public void getBonus(String content) throws ScriptException,
+			NoSuchMethodException, ClientProtocolException, IOException,
+			InterruptedException {
+		mustWaitMin();
+		int index = content.indexOf("/ajax_v2/bonus/");
+		if (index > 0) {
+			int index2 = content.indexOf(";", index);
+			if (index2 > 0) {
+				String sub = content.substring(0, index2 + 1);
+				int index3 = sub.lastIndexOf("<![CDATA[");
+				if (index3 > 0) {
+					String js = sub.substring(index3 + 9);
+					js ="function getBonus(){ " +js +" return src_script + '.js'; }";
+					invocableEngine.eval(js);
+					Object object= ((Invocable)invocableEngine ).invokeFunction("getBonus", new Object[]{});
+					System.out.println("preocess >>>>>"+object);
+					String link = "http://vatgia.com"+object;
+					initHttpClient(httpclient);
+					HttpGet httpGetStepOne = new HttpGet(link);
+					setHeader(httpGetStepOne);
+					String responseBody = httpclient.execute(httpGetStepOne,
+							responseHandler);
+					System.out.println(responseBody);
+				}
+			}
+		}
+	}
+
+	ScriptEngine invocableEngine;
+
+	public ScriptEngine initScriptEngine() {
+		ScriptEngineManager mgr = new ScriptEngineManager();
+		ScriptEngine jsEngine = mgr.getEngineByName("JavaScript");
+		invocableEngine = jsEngine;
+		return invocableEngine;
+	}
+
 	public void getUrls(String startUrl, ArrayList<String> arr)
 			throws Exception {
 		initHttpClient(httpclient);
@@ -149,8 +206,10 @@ public class Vatgia {
 				"utf-8");
 		SAXReader reader = new SAXReader();
 		Document document = reader.read(new StringReader(xml));
+		getBonus(xml);
 		List<?> list = document
 				.selectNodes("//div[@class='content']/ul[@class='list_category']/li[@class='fl']/a/@href");
+
 		if (list.isEmpty()) {
 			// http://www.vatgia.com/392/may-tinh-linh-kien.html
 			String[] temp = startUrl.split("/");
