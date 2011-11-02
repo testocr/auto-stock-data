@@ -136,6 +136,7 @@ public class Vatgia {
 	}
 
 	public synchronized void mustWait() throws InterruptedException {
+
 		long max = 5;
 		long size = 6;
 		long real = Math.round(max + size * Math.random());
@@ -163,14 +164,22 @@ public class Vatgia {
 					js ="function getBonus(){ " +js +" return src_script + '.js'; }";
 					invocableEngine.eval(js);
 					Object object= ((Invocable)invocableEngine ).invokeFunction("getBonus", new Object[]{});
-					System.out.println("preocess >>>>>"+object);
 					String link = "http://vatgia.com"+object;
 					initHttpClient(httpclient);
 					HttpGet httpGetStepOne = new HttpGet(link);
 					setHeader(httpGetStepOne);
 					String responseBody = httpclient.execute(httpGetStepOne,
 							responseHandler);
-					System.out.println(responseBody);
+					if(responseBody!=null){
+						int index4 = responseBody.indexOf("<b style=\"color: red;\">");
+						if(index4>0){
+							int index5 = responseBody.indexOf("</b>");
+							if(index5>0){
+								String amount = responseBody.substring(index4+23,index5);
+								System.out.println(amount);
+							}
+						}
+					}
 				}
 			}
 		}
