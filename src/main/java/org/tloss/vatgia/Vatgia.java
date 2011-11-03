@@ -179,6 +179,7 @@ public class Vatgia {
 					setHeader(httpGetStepOne);
 					String responseBody = httpclient.execute(httpGetStepOne,
 							responseHandler);
+
 					if (responseBody != null) {
 						int index4 = responseBody
 								.indexOf("<b style=\"color: red;\">");
@@ -210,6 +211,20 @@ public class Vatgia {
 				}
 			}
 		}
+	}
+
+	public void convert() throws Exception {
+		initHttpClient(httpclient);
+		HttpPost httpPost = new HttpPost(
+				"http://slave.vatgia.com/profile/?module=view_bonus");
+		MultipartEntity entity = new MultipartEntity();
+		//TODO anti captcha
+		entity.addPart("security_code", new StringBody("need some code"));
+		entity.addPart("actions", new StringBody("convert"));
+		httpPost.setEntity(entity);
+		setHeader(httpPost);
+		String responseBody = httpclient.execute(httpPost, responseHandler);
+		System.out.println(responseBody);
 	}
 
 	ScriptEngine invocableEngine;
