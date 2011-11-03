@@ -92,8 +92,11 @@ public class Captcha {
 			public final int filterRGB(int x, int y, int rgb) {
 				boolean cleanColor = false;
 				for (int i = 0; i < colors.length && !cleanColor; i++) {
-					if ((colors[i]) == (rgb & 0x00FFFFFF))
+					//XXXX08
+					//FEXXX
+					if ((rgb & 0x000000FF) == 0x00000008||(rgb & 0x00FF0000) == 0x00FE0000 ||(colors[i]) == (rgb & 0x00FFFFFF))
 						cleanColor = true;
+					
 				}
 				if (cleanColor) {
 					return 0xFFFFFFFF;
@@ -191,10 +194,11 @@ public class Captcha {
 
 	public static void main(String[] args) throws Exception {
 		Captcha captcha = new Captcha();
-		BufferedImage img = ImageIO.read(new File(
-				"captcha\\captcha28798307920516.png"));
-		String fileName = captcha.antiNoise(img);
-		System.out.println(fileName);
+//		BufferedImage img = ImageIO.read(new File(
+//				"captcha\\captcha32583927188880.png"));
+//		String fileName = captcha.antiNoise(img);
+//		System.out.println(fileName);
+		String fileName="captcha32928564430760.jpg";
 		String result = captcha.recognizeText(fileName);
 		System.out.println(result);
 		System.out.println(captcha.validate(result.trim()));
