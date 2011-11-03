@@ -1,22 +1,20 @@
 package org.tloss.vatgia;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 
+import javax.imageio.ImageIO;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 
 import org.apache.http.HttpVersion;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
@@ -29,7 +27,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.AbstractHttpMessage;
 import org.apache.http.params.CoreProtocolPNames;
 import org.dom4j.Document;
-import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
 import org.htmlcleaner.CleanerProperties;
@@ -37,8 +34,9 @@ import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.PrettyXmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.tloss.common.DefaultResponseHandler;
+import org.tloss.common.Image;
 import org.tloss.common.PasswordUtils;
-import org.tloss.muachung.MuaCungLoanTin;
+import org.tloss.common.utils.Utils;
 
 public class Vatgia {
 	HttpClient httpclient = new DefaultHttpClient();
@@ -155,9 +153,7 @@ public class Vatgia {
 	long tryCount = 0;
 	long maxTryCount = 5;
 
-	public void getBonus(String content) throws ScriptException,
-			NoSuchMethodException, ClientProtocolException, IOException,
-			InterruptedException {
+	public void getBonus(String content) throws Exception {
 		mustWaitMin();
 
 		int index = content.indexOf("/ajax_v2/bonus/");
@@ -196,11 +192,16 @@ public class Vatgia {
 										.replaceAll("\\.", ""));
 								if (lamount > currentMoney) {
 									currentMoney = lamount;
+									if (currentMoney > 2000) {
+										convert();
+									}
 								} else {
 									System.exit(0);
 								}
 							}
 						} else {
+							// TODO debug
+							convert();
 							if (tryCount < maxTryCount) {
 								tryCount++;
 							} else {
@@ -213,18 +214,44 @@ public class Vatgia {
 		}
 	}
 
+	Captcha captcha = new Captcha();
+
 	public void convert() throws Exception {
 		initHttpClient(httpclient);
-		HttpPost httpPost = new HttpPost(
+		HttpGet httpGetStepOne = new HttpGet(
 				"http://slave.vatgia.com/profile/?module=view_bonus");
-		MultipartEntity entity = new MultipartEntity();
-		//TODO anti captcha
-		entity.addPart("security_code", new StringBody("need some code"));
-		entity.addPart("actions", new StringBody("convert"));
-		httpPost.setEntity(entity);
-		setHeader(httpPost);
-		String responseBody = httpclient.execute(httpPost, responseHandler);
-		System.out.println(responseBody);
+		setHeader(httpGetStepOne);
+		String responseBody = httpclient.execute(httpGetStepOne,
+				responseHandler);
+		int index = responseBody.indexOf("/home/security_code.php");
+		if (index > 0) {
+			int index2 = responseBody.indexOf("\"", index);
+			if (index2 > 0) {
+				String url = responseBody.substring(index, index2);
+				mustWaitMin();
+				Image image = Utils.download("http://slave.vatgia.com" + url,
+						false, httpclient);
+				InputStream in = new ByteArrayInputStream(image.getData());
+				BufferedImage img = ImageIO.read(in);
+				String fileName = captcha.antiNoise(img);
+				String result = captcha.recognizeText(fileName);
+				if (captcha.validate(result)) {
+					mustWaitMin();
+					HttpPost httpPost = new HttpPost(
+							"http://slave.vatgia.com/profile/?module=view_bonus");
+					MultipartEntity entity = new MultipartEntity();
+					entity.addPart("security_code", new StringBody(result));
+					entity.addPart("actions", new StringBody("convert"));
+					httpPost.setEntity(entity);
+					setHeader(httpPost);
+					responseBody = httpclient
+							.execute(httpPost, responseHandler);
+					System.out.println(responseBody);
+				} else {
+					System.out.println("error captcha: " + fileName);
+				}
+			}
+		}
 	}
 
 	ScriptEngine invocableEngine;

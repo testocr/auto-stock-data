@@ -17,7 +17,11 @@ import java.awt.image.ImageProducer;
 import java.awt.image.PixelGrabber;
 import java.awt.image.RGBImageFilter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 import java.util.regex.Pattern;
 
 import javax.imageio.IIOImage;
@@ -29,21 +33,40 @@ import net.sourceforge.vietocr.utilities.ImageIOHelper;
 import net.sourceforge.vietocr.utilities.Utilities;
 
 public class Captcha {
-	public void antiNoise() throws Exception {
-		BufferedImage img = ImageIO.read(new File("security_code1.png"));
+	int[] colors;
+
+	public Captcha() {
+		Properties properties = new Properties();
+		try {
+			properties.load(new FileInputStream("vatgia.captcha.properties"));
+			String[] colors = properties.getProperty("colors", "").split(",");
+			this.colors = new int[colors.length];
+			for (int i = 0; i < colors.length; i++) {
+				this.colors[i] = Integer.parseInt(colors[i], 16);
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	public String antiNoise(BufferedImage img) throws Exception {
+		// BufferedImage img = ImageIO.read(new File("security_code1.png"));
 		BufferedImage image = new BufferedImage(img.getWidth(),
 				img.getHeight(), BufferedImage.TYPE_INT_RGB);
 		Graphics graphics = image.getGraphics();
 		graphics.setColor(new Color(0xFFFFFF));
 		graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
-		int[] colors = new int[] { 0xfe5afd, 0xfe4c64, 0xfe3e06, 0x3b0808,
-				0xfe3575, 0xfe4c7b, 0xfe3e61, 0x6c0a08, 0xfe3f46, 0xfe58e6,
-				0xfe48fe, 0xfe32e5 };
 		graphics.drawImage(
 				toBufferedImage(transformGrayToTransparency(img, colors)), 0,
 				0, new Color(0xFFFFFF), null);
-		ImageIO.write(image, "jpg", new File("test.jpg"));
-
+		String fileName = "captcha" + System.nanoTime();
+		String fileName1 = fileName + ".png";
+		ImageIO.write(image, "jpg", new File("captcha\\" + fileName + ".jpg"));
+		ImageIO.write(image, "png", new File("captcha\\" + fileName1));
+		return fileName+ ".jpg";
 	}
 
 	public String recognizeText(String fileName) throws Exception {
@@ -55,7 +78,7 @@ public class Captcha {
 		tessPath = new File(baseDir, "tesseract").getPath();
 		OCR ocrEngine = new OCR(tessPath);
 		ocrEngine.setPSM(psm);
-		File imageFile = new File(fileName);
+		File imageFile = new File("captcha\\" + fileName);
 		List<IIOImage> iioImageList = ImageIOHelper.getIIOImageList(imageFile);
 		List<File> tempTiffFiles = null;
 		tempTiffFiles = ImageIOHelper.createTiffFiles(iioImageList, -1);
@@ -168,9 +191,13 @@ public class Captcha {
 
 	public static void main(String[] args) throws Exception {
 		Captcha captcha = new Captcha();
-		captcha.antiNoise();
-		String result = captcha.recognizeText("test.jpg");
+		BufferedImage img = ImageIO.read(new File(
+				"captcha\\captcha28798307920516.png"));
+		String fileName = captcha.antiNoise(img);
+		System.out.println(fileName);
+		String result = captcha.recognizeText(fileName);
 		System.out.println(result);
 		System.out.println(captcha.validate(result.trim()));
+
 	}
 }
