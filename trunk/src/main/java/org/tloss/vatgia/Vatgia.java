@@ -193,6 +193,8 @@ public class Vatgia {
 								if (lamount > currentMoney) {
 									currentMoney = lamount;
 									if (currentMoney > 2000) {
+										System.out.println("Enought money fo transfer!");
+										mustWait();
 										convert();
 									}
 								} else {
@@ -200,8 +202,6 @@ public class Vatgia {
 								}
 							}
 						} else {
-							// TODO debug
-							convert();
 							if (tryCount < maxTryCount) {
 								tryCount++;
 							} else {
@@ -235,18 +235,17 @@ public class Vatgia {
 				BufferedImage img = ImageIO.read(in);
 				String fileName = captcha.antiNoise(img);
 				String result = captcha.recognizeText(fileName);
-				if (captcha.validate(result)) {
-					mustWaitMin();
+				if (captcha.validate(result.trim())) {
+					mustWait();
 					HttpPost httpPost = new HttpPost(
 							"http://slave.vatgia.com/profile/?module=view_bonus");
 					MultipartEntity entity = new MultipartEntity();
-					entity.addPart("security_code", new StringBody(result));
+					entity.addPart("security_code", new StringBody(result.trim()));
 					entity.addPart("actions", new StringBody("convert"));
 					httpPost.setEntity(entity);
 					setHeader(httpPost);
 					responseBody = httpclient
 							.execute(httpPost, responseHandler);
-					System.out.println(responseBody);
 				} else {
 					System.out.println("error captcha: " + fileName);
 				}
