@@ -190,10 +190,11 @@ public class Vatgia {
 								System.out.println(amount);
 								long lamount = Long.parseLong(amount
 										.replaceAll("\\.", ""));
-								if (lamount > currentMoney) {
+								if (lamount != currentMoney) {
 									currentMoney = lamount;
 									if (currentMoney > 2000) {
-										System.out.println("Enought money fo transfer!");
+										System.out
+												.println("Enought money fo transfer!");
 										mustWait();
 										convert();
 									}
@@ -240,7 +241,8 @@ public class Vatgia {
 					HttpPost httpPost = new HttpPost(
 							"http://slave.vatgia.com/profile/?module=view_bonus");
 					MultipartEntity entity = new MultipartEntity();
-					entity.addPart("security_code", new StringBody(result.trim()));
+					entity.addPart("security_code",
+							new StringBody(result.trim()));
 					entity.addPart("actions", new StringBody("convert"));
 					httpPost.setEntity(entity);
 					setHeader(httpPost);
@@ -302,33 +304,37 @@ public class Vatgia {
 	}
 
 	public static void main(String[] args) throws Exception {
-
-		Vatgia vatgia = new Vatgia();
-		PasswordUtils.loadKeyStore();
-		Properties properties = new Properties();
-		properties.load(new FileInputStream("vatgia.properties"));
-		String username = properties.getProperty("username", "");
-		String password = properties.getProperty("password", "");
-		String maxRequest = properties.getProperty("maxRequest", "500");
-		int maxReq = Integer.parseInt(maxRequest);
-		vatgia.setMaxRequest(maxReq);
-		String[] startUrls = properties.getProperty("startUrl", "").split(",");
-		password = PasswordUtils.decryt(password);
-		ArrayList<String> urls = new ArrayList<String>();
-		if (vatgia.login(username, password)) {
-			vatgia.mustWait();
-			for (int i = 0; i < startUrls.length; i++) {
-				try {
-					urls.clear();
-					vatgia.getUrls(startUrls[i], urls);
-					for (int j = 0; j < urls.size(); j++) {
-						vatgia.sendRequest("http://www.vatgia.com/home/listudv.php?module=product&iCat="
-								+ urls.get(j));
+		try {
+			Vatgia vatgia = new Vatgia();
+			PasswordUtils.loadKeyStore();
+			Properties properties = new Properties();
+			properties.load(new FileInputStream("vatgia.properties"));
+			String username = properties.getProperty("username", "");
+			String password = properties.getProperty("password", "");
+			String maxRequest = properties.getProperty("maxRequest", "500");
+			int maxReq = Integer.parseInt(maxRequest);
+			vatgia.setMaxRequest(maxReq);
+			String[] startUrls = properties.getProperty("startUrl", "").split(
+					",");
+			password = PasswordUtils.decryt(password);
+			ArrayList<String> urls = new ArrayList<String>();
+			if (vatgia.login(username, password)) {
+				vatgia.mustWait();
+				for (int i = 0; i < startUrls.length; i++) {
+					try {
+						urls.clear();
+						vatgia.getUrls(startUrls[i], urls);
+						for (int j = 0; j < urls.size(); j++) {
+							vatgia.sendRequest("http://www.vatgia.com/home/listudv.php?module=product&iCat="
+									+ urls.get(j));
+						}
+					} catch (Exception e) {
+						e.printStackTrace(System.out);
 					}
-				} catch (Exception e) {
-					e.printStackTrace();
 				}
 			}
+		} catch (Exception e) {
+			e.printStackTrace(System.out);
 		}
 	}
 }
