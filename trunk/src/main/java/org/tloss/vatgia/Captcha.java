@@ -40,14 +40,19 @@ public class Captcha {
 		try {
 			properties.load(new FileInputStream("vatgia.captcha.properties"));
 			String[] colors = properties.getProperty("colors", "").split(",");
-			this.colors = new int[colors.length];
-			for (int i = 0; i < colors.length; i++) {
-				this.colors[i] = Integer.parseInt(colors[i], 16);
+			if (colors == null || colors.length == 0
+					|| (colors.length == 1 && "".equals(colors[0]))) {
+				this.colors = new int[] {};
+			} else {
+				this.colors = new int[colors.length];
+				for (int i = 0; i < colors.length; i++) {
+					this.colors[i] = Integer.parseInt(colors[i], 16);
+				}
 			}
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			e.printStackTrace(System.out);
 		} catch (IOException e) {
-			e.printStackTrace();
+			e.printStackTrace(System.out);
 		}
 
 	}
@@ -66,7 +71,7 @@ public class Captcha {
 		String fileName1 = fileName + ".png";
 		ImageIO.write(image, "jpg", new File("captcha\\" + fileName + ".jpg"));
 		ImageIO.write(image, "png", new File("captcha\\" + fileName1));
-		return fileName+ ".jpg";
+		return fileName + ".jpg";
 	}
 
 	public String recognizeText(String fileName) throws Exception {
@@ -91,12 +96,16 @@ public class Captcha {
 		ImageFilter filter = new RGBImageFilter() {
 			public final int filterRGB(int x, int y, int rgb) {
 				boolean cleanColor = false;
+				// XXXX08
+				// FEXXX
+				if ((rgb & 0x000000FF) == 0x00000008
+						|| (rgb & 0x00FF0000) == 0x00FE0000) {
+					cleanColor = true;
+				}
 				for (int i = 0; i < colors.length && !cleanColor; i++) {
-					//XXXX08
-					//FEXXX
-					if ((rgb & 0x000000FF) == 0x00000008||(rgb & 0x00FF0000) == 0x00FE0000 ||(colors[i]) == (rgb & 0x00FFFFFF))
-						cleanColor = true;
 					
+					if ((colors[i]) == (rgb & 0x00FFFFFF))
+						cleanColor = true;
 				}
 				if (cleanColor) {
 					return 0xFFFFFFFF;
@@ -194,11 +203,11 @@ public class Captcha {
 
 	public static void main(String[] args) throws Exception {
 		Captcha captcha = new Captcha();
-//		BufferedImage img = ImageIO.read(new File(
-//				"captcha\\captcha32583927188880.png"));
-//		String fileName = captcha.antiNoise(img);
-//		System.out.println(fileName);
-		String fileName="captcha32928564430760.jpg";
+		BufferedImage img = ImageIO.read(new File(
+				"captcha\\security_code.php.png"));
+		String fileName = captcha.antiNoise(img);
+		System.out.println(fileName);
+		// String fileName = "captcha32928564430760.jpg";
 		String result = captcha.recognizeText(fileName);
 		System.out.println(result);
 		System.out.println(captcha.validate(result.trim()));
