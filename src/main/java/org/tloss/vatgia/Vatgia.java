@@ -236,6 +236,7 @@ public class Vatgia {
 				BufferedImage img = ImageIO.read(in);
 				String fileName = captcha.antiNoise(img);
 				String result = captcha.recognizeText(fileName);
+				System.out.println("captcha result: " + result);
 				if (captcha.validate(result.trim())) {
 					mustWait();
 					HttpPost httpPost = new HttpPost(
