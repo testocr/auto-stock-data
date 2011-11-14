@@ -6,14 +6,18 @@
  */
 package org.tloss.chodientu;
 
-import java.io.IOException;
+import java.io.FileInputStream;
 import java.io.StringReader;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.http.HttpVersion;
-import org.apache.http.client.ClientProtocolException;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.params.ClientPNames;
@@ -22,6 +26,7 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.AbstractHttpMessage;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.CoreProtocolPNames;
 import org.dom4j.Document;
 import org.dom4j.Node;
@@ -32,6 +37,7 @@ import org.htmlcleaner.PrettyXmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.tloss.common.DefaultResponseAndFollowHandler;
 import org.tloss.common.DefaultResponseHandler;
+import org.tloss.common.PasswordUtils;
 
 /**
  * @author tungt
@@ -99,7 +105,6 @@ public class Chodientu {
 					+ responseBody);
 			setHeader(httpGetStepOne);
 			responseBody = httpclient.execute(httpGetStepOne, responseHandler);
-			System.out.println(responseBody);
 		}
 		return responseBody.indexOf(username) >= 0;
 
@@ -158,6 +163,63 @@ public class Chodientu {
 		wait(real * 1000);
 	}
 
+	public void search(String keyWord) throws Exception {
+		System.out.println("keyword: " +keyWord);
+		List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+		nvps.add(new BasicNameValuePair("keyword", keyWord));
+		nvps.add(new BasicNameValuePair("form_module_id", "415"));
+		nvps.add(new BasicNameValuePair("category_name", ""));
+		nvps.add(new BasicNameValuePair("keyword_item", keyWord));
+		nvps.add(new BasicNameValuePair("category_id", "0"));
+		nvps.add(new BasicNameValuePair("search-button", ""));
+		nvps.add(new BasicNameValuePair("type_search", "1"));
+		initHttpClient(httpclient);
+		HttpPost httpPost = new HttpPost("http://chodientu.vn/hoat-dong.html");
+		setHeader(httpPost);
+		httpPost.setEntity(new UrlEncodedFormEntity(nvps));
+		String responseBody = httpclient.execute(httpPost, followHandler);
+		if (followHandler.isMustFollow()) {
+			HttpGet httpGetStepOne = new HttpGet(responseBody);
+			setHeader(httpGetStepOne);
+			responseBody = httpclient.execute(httpGetStepOne, followHandler);
+			mustWait();
+			try{
+			view(responseBody);
+			}catch (Exception e) {
+				e.printStackTrace(System.out);
+			}
+		}
+
+	}
+
+	public void view(String responseBody) throws Exception {
+		CleanerProperties props = new CleanerProperties();
+		// set some properties to non-default values
+		props.setTranslateSpecialEntities(true);
+		props.setTransResCharsToNCR(true);
+		props.setOmitComments(true);
+		// do parsing
+		TagNode tagNode = new HtmlCleaner(props).clean(new StringReader(
+				responseBody));
+		// serialize to xml file
+		String xml = new PrettyXmlSerializer(props).getAsString(tagNode,
+				"utf-8");
+		// System.out.println(xml);
+		SAXReader reader = new SAXReader();
+		Document document = reader.read(new StringReader(xml));
+		List<?> list = document
+				.selectNodes("//div[@class='info-detail']/div[@class='row1']/h4/a/@href");
+		if (list.size() > 0) {
+			int d = (int) (Math.round((Math.random() * (list.size() - 1))) % list
+					.size());
+			Node element = (Node) list.get(d);
+			initHttpClient(httpclient);
+			HttpGet httpGetStepOne = new HttpGet(element.getText().replaceAll("\\|", URLEncoder.encode("|", "utf-8")));
+			setHeader(httpGetStepOne);
+			responseBody = httpclient.execute(httpGetStepOne, followHandler);
+		}
+	}
+
 	public void logout() throws Exception {
 		initHttpClient(httpclient);
 		HttpGet httpGetStepOne = new HttpGet(
@@ -168,23 +230,39 @@ public class Chodientu {
 			httpGetStepOne = new HttpGet("http://chodientu.vn/" + responseBody);
 			setHeader(httpGetStepOne);
 			responseBody = httpclient.execute(httpGetStepOne, responseHandler);
-			System.out.println(responseBody);
 		}
 
 	}
 
 	public static void main(String[] args) throws Exception {
 		Chodientu chodientu = new Chodientu();
-		int searchTime = 20;
-		int loginTime = 12;
-		int viewDetail = 20;
+		PasswordUtils.loadKeyStore();
+		Properties properties = new Properties();
+		properties.load(new FileInputStream("chodientu.properties"));
+		String username = properties.getProperty("username", "");
+		String password = properties.getProperty("password", "");
+		password = PasswordUtils.decryt(password);
+
+		int searchTime = Integer.parseInt(properties.getProperty("searchTime",
+				"20"));
+		int loginTime = Integer.parseInt(properties.getProperty("loginTime",
+				"12"));
+		int viewDetail = Integer.parseInt(properties.getProperty("viewDetail",
+				"20"));
+
+		String[] keyword = properties.getProperty("keyword", "").split(",");
 		int max = searchTime >= loginTime ? (searchTime >= viewDetail ? searchTime
 				: viewDetail)
 				: (loginTime >= viewDetail ? loginTime : viewDetail);
 		int i = 0;
 		while (i < max) {
-			if (chodientu.login("myname74119", "123456789")) {
+			if (chodientu.login(username, password)) {
 				chodientu.mustWait();
+				try{
+				chodientu.search(keyword[i % keyword.length]);
+				}catch (Exception e) {
+					e.printStackTrace(System.out);
+				}
 				chodientu.logout();
 			}
 			i++;
