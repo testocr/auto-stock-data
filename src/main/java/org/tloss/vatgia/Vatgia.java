@@ -134,10 +134,21 @@ public class Vatgia {
 		}
 	}
 
+	long maxMustWait;
+	long sizeMustWait;
+
+	public void setMaxMustWait(long maxMustWait) {
+		this.maxMustWait = maxMustWait;
+	}
+
+	public void setSizeMustWait(long sizeMustWait) {
+		this.sizeMustWait = sizeMustWait;
+	}
+
 	public synchronized void mustWait() throws InterruptedException {
 
-		long max = 5;
-		long size = 6;
+		long max = maxMustWait;
+		long size = sizeMustWait;
 		long real = Math.round(max + size * Math.random());
 		wait(real * 1000);
 	}
@@ -187,7 +198,7 @@ public class Vatgia {
 							if (index5 > 0) {
 								String amount = responseBody.substring(
 										index4 + 23, index5);
-								System.out.println(amount);
+								// System.out.println(amount);
 								long lamount = Long.parseLong(amount
 										.replaceAll("\\.", ""));
 								if (lamount != currentMoney) {
@@ -249,6 +260,31 @@ public class Vatgia {
 					setHeader(httpPost);
 					responseBody = httpclient
 							.execute(httpPost, responseHandler);
+					int index3 = responseBody
+							.indexOf("/ajax_v2/load_bonus.php?uid=");
+					if (index3 > 0) {
+						int index4 = responseBody.indexOf("\"", index3);
+						if (index4 > 0) {
+							String loadUrl = responseBody.substring(index3,
+									index4);
+							httpGetStepOne = new HttpGet(
+									"http://slave.vatgia.com" + loadUrl);
+							setHeader(httpGetStepOne);
+							responseBody = httpclient.execute(httpGetStepOne,
+									responseHandler);
+							// <b class="count">
+							int index5 = responseBody
+									.indexOf("<b class=\"count\">");
+							if (index5 > 0) {
+								int index6 = responseBody.indexOf("</b>");
+								if (index6 > 0) {
+									System.out.println("After Transfer "
+											+ responseBody.substring(
+													index5 + 17, index6));
+								}
+							}
+						}
+					}
 				} else {
 					System.out.println("error captcha: " + fileName);
 				}
@@ -313,11 +349,18 @@ public class Vatgia {
 			String username = properties.getProperty("username", "");
 			String password = properties.getProperty("password", "");
 			String maxRequest = properties.getProperty("maxRequest", "500");
+			String maxMustWait = properties.getProperty("maxMustWait", "5");
+			String sizeMustWait = properties.getProperty("sizeMustWait", "5");
+			vatgia.setMaxMustWait(Long.valueOf(maxMustWait));
+			vatgia.setSizeMustWait(Long.valueOf(sizeMustWait));
 			int maxReq = Integer.parseInt(maxRequest);
 			vatgia.setMaxRequest(maxReq);
 			String[] startUrls = properties.getProperty("startUrl", "").split(
 					",");
 			password = PasswordUtils.decryt(password);
+			if (args != null && args.length == 1) {
+				username = args[0];
+			}
 			ArrayList<String> urls = new ArrayList<String>();
 			if (vatgia.login(username, password)) {
 				vatgia.mustWait();
@@ -328,6 +371,9 @@ public class Vatgia {
 						for (int j = 0; j < urls.size(); j++) {
 							vatgia.sendRequest("http://www.vatgia.com/home/listudv.php?module=product&iCat="
 									+ urls.get(j));
+							System.out
+									.println("Proccess http://www.vatgia.com/home/listudv.php?module=product&iCat="
+											+ urls.get(j));
 						}
 					} catch (Exception e) {
 						e.printStackTrace(System.out);
