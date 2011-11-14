@@ -6,10 +6,12 @@
  */
 package org.tloss.chodientu;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 
 import org.apache.http.HttpVersion;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
@@ -156,10 +158,36 @@ public class Chodientu {
 		wait(real * 1000);
 	}
 
+	public void logout() throws Exception {
+		initHttpClient(httpclient);
+		HttpGet httpGetStepOne = new HttpGet(
+				"http://chodientu.vn/dang-xuat.html?ref=hoat-dong.html&title=Tho%C3%A1t");
+		setHeader(httpGetStepOne);
+		String responseBody = httpclient.execute(httpGetStepOne, followHandler);
+		if (followHandler.isMustFollow()) {
+			httpGetStepOne = new HttpGet("http://chodientu.vn/" + responseBody);
+			setHeader(httpGetStepOne);
+			responseBody = httpclient.execute(httpGetStepOne, responseHandler);
+			System.out.println(responseBody);
+		}
+
+	}
+
 	public static void main(String[] args) throws Exception {
 		Chodientu chodientu = new Chodientu();
-		if(chodientu.login("", "")){
-			System.out.println("Login success");
+		int searchTime = 20;
+		int loginTime = 12;
+		int viewDetail = 20;
+		int max = searchTime >= loginTime ? (searchTime >= viewDetail ? searchTime
+				: viewDetail)
+				: (loginTime >= viewDetail ? loginTime : viewDetail);
+		int i = 0;
+		while (i < max) {
+			if (chodientu.login("myname74119", "123456789")) {
+				chodientu.mustWait();
+				chodientu.logout();
+			}
+			i++;
 		}
 
 	}
