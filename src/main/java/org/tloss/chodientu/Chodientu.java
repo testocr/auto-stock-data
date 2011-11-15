@@ -215,8 +215,10 @@ public class Chodientu {
 					.size());
 			Node element = (Node) list.get(d);
 			initHttpClient(httpclient);
-			HttpGet httpGetStepOne = new HttpGet(normalViewURL(element.getText()).replaceAll(
-					"\\|", URLEncoder.encode("|", "utf-8")));
+			String url = normalViewURL(element.getText()).replaceAll(
+					"\\|", URLEncoder.encode("|", "utf-8"));
+			System.out.println("View URL: "+url);
+			HttpGet httpGetStepOne = new HttpGet(url);
 			setHeader(httpGetStepOne);
 			responseBody = httpclient.execute(httpGetStepOne, followHandler);
 		}
@@ -224,6 +226,9 @@ public class Chodientu {
 
 	public String normalViewURL(String url) throws UnsupportedEncodingException {
 		if (url != null) {
+			if(!(url.startsWith("https://")||url.startsWith("http://"))){
+				url = "http://chodientu.vn/"+url;
+			}
 			int index = url.lastIndexOf("/");
 			if (index > 0 && index < url.length() - 1) {
 				String sub1 = url.substring(0, index + 1);
