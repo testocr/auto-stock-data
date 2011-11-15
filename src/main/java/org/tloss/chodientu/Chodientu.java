@@ -8,6 +8,7 @@ package org.tloss.chodientu;
 
 import java.io.FileInputStream;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
@@ -164,7 +165,7 @@ public class Chodientu {
 	}
 
 	public void search(String keyWord) throws Exception {
-		System.out.println("keyword: " +keyWord);
+		System.out.println("keyword: " + keyWord);
 		List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 		nvps.add(new BasicNameValuePair("keyword", keyWord));
 		nvps.add(new BasicNameValuePair("form_module_id", "415"));
@@ -183,9 +184,9 @@ public class Chodientu {
 			setHeader(httpGetStepOne);
 			responseBody = httpclient.execute(httpGetStepOne, followHandler);
 			mustWait();
-			try{
-			view(responseBody);
-			}catch (Exception e) {
+			try {
+				view(responseBody);
+			} catch (Exception e) {
 				e.printStackTrace(System.out);
 			}
 		}
@@ -214,10 +215,23 @@ public class Chodientu {
 					.size());
 			Node element = (Node) list.get(d);
 			initHttpClient(httpclient);
-			HttpGet httpGetStepOne = new HttpGet(element.getText().replaceAll("\\|", URLEncoder.encode("|", "utf-8")));
+			HttpGet httpGetStepOne = new HttpGet(normalViewURL(element.getText()).replaceAll(
+					"\\|", URLEncoder.encode("|", "utf-8")));
 			setHeader(httpGetStepOne);
 			responseBody = httpclient.execute(httpGetStepOne, followHandler);
 		}
+	}
+
+	public String normalViewURL(String url) throws UnsupportedEncodingException {
+		if (url != null) {
+			int index = url.lastIndexOf("/");
+			if (index > 0 && index < url.length() - 1) {
+				String sub1 = url.substring(0, index + 1);
+				String sub2 = url.substring(index + 1);
+				return "" + sub1 + URLEncoder.encode(sub2, "utf-8");
+			}
+		}
+		return url;
 	}
 
 	public void logout() throws Exception {
@@ -258,9 +272,9 @@ public class Chodientu {
 		while (i < max) {
 			if (chodientu.login(username, password)) {
 				chodientu.mustWait();
-				try{
-				chodientu.search(keyword[i % keyword.length]);
-				}catch (Exception e) {
+				try {
+					chodientu.search(keyword[i % keyword.length]);
+				} catch (Exception e) {
 					e.printStackTrace(System.out);
 				}
 				chodientu.logout();
