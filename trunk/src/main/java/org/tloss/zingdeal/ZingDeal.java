@@ -382,22 +382,26 @@ public class ZingDeal {
 		Properties properties = new Properties();
 		properties.load(new FileInputStream("zingdeal.properties"));
 		String username = properties.getProperty("username", "");
-		String password = properties.getProperty("passowrd", "");
+		String password = properties.getProperty("password", "");
 		password = PasswordUtils.decryt(password);
 		String userid = properties.getProperty("userid", "");
 		String url = properties.getProperty("url", "");
+		int number = Integer.valueOf(properties.getProperty("number", "1"));
 		System.out.println(url);
 		while (!article
 				.login(username, password, true, new Object[] { "", "" })) {
 		}
-		try {
+		int i = 0;
+		while (number < 0 || i < number) {
+			try {
 
-			article.post(null, url, null, new Object[] { userid });
-		} catch (Exception e) {
-			System.out.println("exception");
-			e.printStackTrace();
+				article.post(null, url, null, new Object[] { userid });
+				i++;
+			} catch (Exception e) {
+				System.out.println("exception");
+				e.printStackTrace();
+			}
 		}
-
 		System.out.println("DONE >>");
 	}
 }
