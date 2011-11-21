@@ -74,6 +74,9 @@ public class Vatgia {
 																			// 1.0
 		httpclient.getParams().setParameter(
 				CoreProtocolPNames.HTTP_CONTENT_CHARSET, "UTF-8");
+		httpclient.getParams().setParameter(
+				"http.protocol.single-cookie-header", true);
+
 		httpclient.getParams().setParameter(ClientPNames.COOKIE_POLICY,
 				CookiePolicy.BROWSER_COMPATIBILITY);
 	}
@@ -164,7 +167,19 @@ public class Vatgia {
 	long tryCount = 0;
 	long maxTryCount = 5;
 
+	boolean bonus;
+
+	public void setBonus(boolean bonus) {
+		this.bonus = bonus;
+	}
+
+	public boolean isBonus() {
+		return bonus;
+	}
+
 	public void getBonus(String content) throws Exception {
+		if (!isBonus())
+			return;
 		mustWaitMin();
 
 		int index = content.indexOf("/ajax_v2/bonus/");
@@ -250,16 +265,6 @@ public class Vatgia {
 				System.out.println("captcha result: " + result);
 				if (captcha.validate(result.trim())) {
 					mustWait();
-					HttpPost httpPost = new HttpPost(
-							"http://slave.vatgia.com/profile/?module=view_bonus");
-					MultipartEntity entity = new MultipartEntity();
-					entity.addPart("security_code",
-							new StringBody(result.trim()));
-					entity.addPart("actions", new StringBody("convert"));
-					httpPost.setEntity(entity);
-					setHeader(httpPost);
-					responseBody = httpclient
-							.execute(httpPost, responseHandler);
 					int index3 = responseBody
 							.indexOf("/ajax_v2/load_bonus.php?uid=");
 					if (index3 > 0) {
@@ -285,6 +290,19 @@ public class Vatgia {
 							}
 						}
 					}
+					mustWaitMin();
+					HttpPost httpPost = new HttpPost(
+							"http://slave.vatgia.com/profile/?module=view_bonus");
+					MultipartEntity entity = new MultipartEntity();
+					entity.addPart("security_code",
+							new StringBody(result.trim()));
+					entity.addPart("action", new StringBody("convert"));
+					httpPost.setEntity(entity);
+					setHeader(httpPost);
+					responseBody = httpclient
+							.execute(httpPost, responseHandler);
+					System.out.println(responseBody);
+
 				} else {
 					System.out.println("error captcha: " + fileName);
 				}
@@ -351,9 +369,11 @@ public class Vatgia {
 			String maxRequest = properties.getProperty("maxRequest", "500");
 			String maxMustWait = properties.getProperty("maxMustWait", "5");
 			String sizeMustWait = properties.getProperty("sizeMustWait", "5");
+			String bonus = properties.getProperty("bonus", "false");
 			vatgia.setMaxMustWait(Long.valueOf(maxMustWait));
 			vatgia.setSizeMustWait(Long.valueOf(sizeMustWait));
 			int maxReq = Integer.parseInt(maxRequest);
+			vatgia.setBonus(Boolean.valueOf(bonus));
 			vatgia.setMaxRequest(maxReq);
 			String[] startUrls = properties.getProperty("startUrl", "").split(
 					",");
