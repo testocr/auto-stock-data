@@ -265,6 +265,17 @@ public class Vatgia {
 				System.out.println("captcha result: " + result);
 				if (captcha.validate(result.trim())) {
 					mustWait();
+					HttpPost httpPost = new HttpPost(
+							"http://slave.vatgia.com/profile/?module=view_bonus");
+					MultipartEntity entity = new MultipartEntity();
+					entity.addPart("security_code",
+							new StringBody(result.trim()));
+					entity.addPart("action", new StringBody("convert"));
+					httpPost.setEntity(entity);
+					setHeader(httpPost);
+					responseBody = httpclient
+							.execute(httpPost, responseHandler);
+					mustWaitMin();
 					int index3 = responseBody
 							.indexOf("/ajax_v2/load_bonus.php?uid=");
 					if (index3 > 0) {
@@ -290,18 +301,6 @@ public class Vatgia {
 							}
 						}
 					}
-					mustWaitMin();
-					HttpPost httpPost = new HttpPost(
-							"http://slave.vatgia.com/profile/?module=view_bonus");
-					MultipartEntity entity = new MultipartEntity();
-					entity.addPart("security_code",
-							new StringBody(result.trim()));
-					entity.addPart("action", new StringBody("convert"));
-					httpPost.setEntity(entity);
-					setHeader(httpPost);
-					responseBody = httpclient
-							.execute(httpPost, responseHandler);
-					System.out.println(responseBody);
 
 				} else {
 					System.out.println("error captcha: " + fileName);
