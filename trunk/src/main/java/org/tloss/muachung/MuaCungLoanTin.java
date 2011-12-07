@@ -6,7 +6,9 @@
  */
 package org.tloss.muachung;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -210,8 +212,10 @@ public class MuaCungLoanTin {
 
 					List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 					nvps.add(new BasicNameValuePair("item_id", id));
-					nvps.add(new BasicNameValuePair("yahoo", (String)options[2]));
-					nvps.add(new BasicNameValuePair("facebook", (String)options[1]));
+					nvps.add(new BasicNameValuePair("yahoo",
+							(String) options[2]));
+					nvps.add(new BasicNameValuePair("facebook",
+							(String) options[1]));
 					nvps.add(new BasicNameValuePair("content", ""));
 					nvps.add(new BasicNameValuePair("rand", String.valueOf(Math
 							.random())));
@@ -290,21 +294,122 @@ public class MuaCungLoanTin {
 		return invocableEngine;
 	}
 
+	public List<String> collectionLink(String[] startUrls) {
+		List<String> collectedLink = new ArrayList<String>();
+		List<String> newCollectedLink = new ArrayList<String>();
+		List<String> vistedLink = new ArrayList<String>();
+		List<String> temp;
+		for (int j = 0; j < startUrls.length; j++) {
+			String startUrl = startUrls[j];
+			collectedLink.add(startUrl);
+		}
+		do {
+			for (Iterator<String> iterator = collectedLink.iterator(); iterator
+					.hasNext();) {
+				String startUrl = (String) iterator.next();
+				collectionLink(startUrl, newCollectedLink, vistedLink);
+			}
+			collectedLink.clear();
+			temp = collectedLink;
+			collectedLink = newCollectedLink;
+			newCollectedLink = temp;
+
+		} while (!(collectedLink.isEmpty() && newCollectedLink.isEmpty()));
+		return vistedLink;
+	}
+
+	public boolean haveCollectionLink() {
+		return new File("collectionLink.properties").exists();
+	}
+
+	public boolean createCollectionLinkFile(List<String> vistedLink) {
+		try {
+			FileOutputStream fileOutputStream = new FileOutputStream(
+					"collectionLink.properties");
+			Properties properties = new Properties();
+			String links = "";
+			for (String link : vistedLink) {
+				if (links.equals("")) {
+					links = link;
+				} else {
+					links = links + "," + link;
+				}
+			}
+			properties.setProperty("collectionLink", links);
+			properties.store(fileOutputStream, "");
+			fileOutputStream.flush();
+			fileOutputStream.close();
+		} catch (Exception e) {
+			e.printStackTrace(System.out);
+			return false;
+		}
+		return true;
+	}
+
+	public void collectionLink(String urlEdit, List<String> newCollectedLink,
+			List<String> vistedLink) {
+		try {
+			if (!vistedLink.contains(urlEdit)) {
+				vistedLink.add(urlEdit);
+				initHttpClient(httpclient);
+
+				HttpGet httpGetStepOne = new HttpGet(urlEdit);
+				setHeader(httpGetStepOne);
+				String responseBody = httpclient.execute(httpGetStepOne,
+						responseHandler);
+				// System.out.println(responseBody);
+				// lay ra noi dung xml
+				CleanerProperties props = new CleanerProperties();
+				// set some properties to non-default values
+				props.setTranslateSpecialEntities(true);
+				props.setTransResCharsToNCR(true);
+				props.setOmitComments(true);
+				// do parsing
+				TagNode tagNode = new HtmlCleaner(props)
+						.clean(new StringReader(responseBody));
+				// serialize to xml file
+				String xml = new PrettyXmlSerializer(props).getAsString(
+						tagNode, "utf-8");
+				// System.out.println(xml);
+				SAXReader reader = new SAXReader();
+				Document document = reader.read(new StringReader(xml));
+				// <input type="hidden" value="0" id="vB_Editor_001_mode"
+				// name="wysiwyg">
+				List<?> list = document
+						.selectNodes("//div[@class='title']/a/@href");
+				for (Object object : list) {
+					Node node = (Node) object;
+					String newUrl = node.getText();
+					if (!newCollectedLink.contains(newUrl)
+							&& !vistedLink.contains(newCollectedLink)) {
+						newCollectedLink.add(newUrl);
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace(System.out);
+		}
+	}
+
 	public static void main(String[] args) throws Exception {
 		PasswordUtils.loadKeyStore();
 		MuaCungLoanTin cungLoanTin = new MuaCungLoanTin();
 		Properties properties = new Properties();
 		properties.load(new FileInputStream("muachung.properties"));
 		String[] usernames = null;
-		if(args!=null&& args.length>=1){
-			usernames = new String[]{args[0]};
-		}else{
+		if (args != null && args.length >= 1) {
+			usernames = new String[] { args[0] };
+		} else {
 			usernames = properties.getProperty("username", "").split(",");
 		}
 		String[] passwords = properties.getProperty("passowrd", "").split(",");
 		String[] startUrls = properties.getProperty("startUrl", "").split(",");
 		String facebook = properties.getProperty("facebook", "0");
 		String yahoo = properties.getProperty("yahoo", "1");
+		if(!cungLoanTin.haveCollectionLink()){
+			List<String> vistedLink  =  cungLoanTin.collectionLink(startUrls);
+			cungLoanTin.createCollectionLinkFile(vistedLink);			
+		}
 		for (int i = 0; i < usernames.length; i++) {
 			String username = usernames[i];
 			String password;
@@ -322,11 +427,11 @@ public class MuaCungLoanTin {
 					collectedLink.add(startUrl);
 				}
 				do {
-					for (Iterator iterator = collectedLink.iterator(); iterator
+					for (Iterator<String> iterator = collectedLink.iterator(); iterator
 							.hasNext();) {
 						String startUrl = (String) iterator.next();
-						cungLoanTin.post(null, startUrl, null,
-								new Object[] { newCollectedLink,facebook,yahoo });
+						cungLoanTin.post(null, startUrl, null, new Object[] {
+								newCollectedLink, facebook, yahoo });
 					}
 					collectedLink.clear();
 					temp = collectedLink;
