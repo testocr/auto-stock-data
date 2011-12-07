@@ -6,9 +6,16 @@
  */
 package org.tloss.muachung.v2;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -203,8 +210,7 @@ public class MuaCungLoanTin {
 			for (Object object : list) {
 				Element element = (Element) object;
 				if (element.attribute("id") != null
-						&& element
-								.attributeValue("onclick")!=null) {
+						&& element.attributeValue("onclick") != null) {
 					// btnLoantin1300
 					String id = element.attribute("id").getValue();
 					id = id.substring(10);
@@ -237,6 +243,154 @@ public class MuaCungLoanTin {
 				if (!newCollectedLink.contains(newUrl)
 						&& !vistedLink.contains(newCollectedLink)) {
 					newCollectedLink.add(newUrl);
+				}
+			}
+			result = true;
+		}
+
+		return result;
+	}
+
+	public boolean isNew(String dburl, String url, String user) {
+		try {
+			Connection con = getConnection(dburl);
+			if (con != null) {
+				PreparedStatement stmt = null;
+				String query = "select * from muachung where url =? and username=?";
+				try {
+					stmt = con.prepareStatement(query);
+					stmt.setString(1, url);
+					stmt.setString(2, user);
+					ResultSet rs = stmt.executeQuery();
+					while (rs.next()) {
+						return false;
+					}
+				} catch (SQLException e) {
+
+				} finally {
+					if (stmt != null) {
+						try {
+							stmt.close();
+						} catch (SQLException e) {
+							e.printStackTrace(System.out);
+						}
+					}
+					if (con != null) {
+						try {
+							con.close();
+						} catch (SQLException e) {
+							e.printStackTrace(System.out);
+						}
+					}
+				}
+			}
+		} catch (SQLException e1) {
+			e1.printStackTrace(System.out);
+		}
+		return true;
+
+	}
+
+	public void saveVistedLink(String dburl, String url, String user) {
+		Connection con;
+		try {
+			con = getConnection(dburl);
+			if (con != null) {
+				PreparedStatement stmt = null;
+				String query = "insert into muachung(url,username) values(?,?)";
+				try {
+					stmt = con.prepareStatement(query);
+					stmt.setString(1, url);
+					stmt.setString(2, user);
+					stmt.executeUpdate();
+					con.commit();
+
+				} catch (SQLException e) {
+					e.printStackTrace(System.out);
+				} finally {
+					if (stmt != null) {
+						try {
+							stmt.close();
+						} catch (SQLException e) {
+							e.printStackTrace(System.out);
+						}
+					}
+					if (con != null) {
+						try {
+							con.close();
+						} catch (SQLException e) {
+							e.printStackTrace(System.out);
+						}
+					}
+				}
+			}
+
+		} catch (SQLException e1) {
+			e1.printStackTrace(System.out);
+		}
+	}
+
+	public boolean post2(Article article, String urlEdit, String urlPost,
+			Object[] options) throws Exception {
+
+		boolean result = false;
+		String user = (String) options[0];
+		String dbUrl = (String) options[3];
+		if (isNew(dbUrl,urlEdit, user)) {
+			saveVistedLink(dbUrl, urlEdit, user);
+			initHttpClient(httpclient);
+
+			HttpGet httpGetStepOne = new HttpGet(urlEdit);
+			setHeader(httpGetStepOne);
+			String responseBody = httpclient.execute(httpGetStepOne,
+					responseHandler);
+			// System.out.println(responseBody);
+			// lay ra noi dung xml
+			CleanerProperties props = new CleanerProperties();
+			// set some properties to non-default values
+			props.setTranslateSpecialEntities(true);
+			props.setTransResCharsToNCR(true);
+			props.setOmitComments(true);
+			// do parsing
+			TagNode tagNode = new HtmlCleaner(props).clean(new StringReader(
+					responseBody));
+			// serialize to xml file
+			String xml = new PrettyXmlSerializer(props).getAsString(tagNode,
+					"utf-8");
+			// System.out.println(xml);
+			SAXReader reader = new SAXReader();
+			Document document = reader.read(new StringReader(xml));
+			// <input type="hidden" value="0" id="vB_Editor_001_mode"
+			// name="wysiwyg">
+			List<?> list = document
+					.selectNodes("//a[contains(@class,'buttonLoantin')]");
+			for (Object object : list) {
+				Element element = (Element) object;
+				if (element.attribute("id") != null
+						&& element.attributeValue("onclick") != null) {
+					// btnLoantin1300
+					String id = element.attribute("id").getValue();
+					id = id.substring(10);
+					HttpPost httpPost = new HttpPost(
+							"http://muachung.vn/ajax.php?act=connect&mccode=check-loantin");
+
+					List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+					nvps.add(new BasicNameValuePair("item_id", id));
+					nvps.add(new BasicNameValuePair("yahoo",
+							(String) options[2]));
+					nvps.add(new BasicNameValuePair("facebook",
+							(String) options[1]));
+					nvps.add(new BasicNameValuePair("content", ""));
+					nvps.add(new BasicNameValuePair("rand", String.valueOf(Math
+							.random())));
+					httpPost.setEntity(new UrlEncodedFormEntity(nvps,
+							HTTP.UTF_8));
+					setHeader(httpPost);
+					responseBody = httpclient
+							.execute(httpPost, responseHandler);
+
+					System.out.println("proccess id: " + id + ", result: "
+							+ responseBody);
 				}
 			}
 			result = true;
@@ -297,6 +451,138 @@ public class MuaCungLoanTin {
 		return invocableEngine;
 	}
 
+	public List<String> collectionLink(String[] startUrls) {
+		List<String> collectedLink = new ArrayList<String>();
+		List<String> newCollectedLink = new ArrayList<String>();
+		List<String> vistedLink = new ArrayList<String>();
+		List<String> temp;
+		for (int j = 0; j < startUrls.length; j++) {
+			String startUrl = startUrls[j];
+			collectedLink.add(startUrl);
+		}
+		do {
+			for (Iterator<String> iterator = collectedLink.iterator(); iterator
+					.hasNext();) {
+				String startUrl = (String) iterator.next();
+				collectionLink(startUrl, newCollectedLink, vistedLink);
+			}
+			collectedLink.clear();
+			temp = collectedLink;
+			collectedLink = newCollectedLink;
+			newCollectedLink = temp;
+
+		} while (!(collectedLink.isEmpty() && newCollectedLink.isEmpty()));
+		return vistedLink;
+	}
+
+	public boolean haveCollectionLink() {
+		return new File("collectionLink.properties").exists();
+	}
+
+	public boolean createCollectionLinkFile(List<String> vistedLink) {
+		try {
+			FileOutputStream fileOutputStream = new FileOutputStream(
+					"collectionLink.properties");
+			Properties properties = new Properties();
+			String links = "";
+			for (String link : vistedLink) {
+				if (links.equals("")) {
+					links = link;
+				} else {
+					links = links + "," + link;
+				}
+			}
+			properties.setProperty("collectionLink", links);
+			properties.store(fileOutputStream, "");
+			fileOutputStream.flush();
+			fileOutputStream.close();
+		} catch (Exception e) {
+			e.printStackTrace(System.out);
+			return false;
+		}
+		return true;
+	}
+
+	public List<String> loadCollectionLink() {
+		ArrayList<String> result = new ArrayList<String>();
+		try {
+			Properties properties = new Properties();
+			properties.load(new FileInputStream("collectionLink.properties"));
+			String links = properties.getProperty("collectionLink");
+			if (links != null) {
+				String[] linkArray = links.split(",");
+				for (int i = 0; i < linkArray.length; i++) {
+					result.add(linkArray[i]);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace(System.out);
+			result.clear();
+		}
+		return result;
+	}
+
+	public void collectionLink(String urlEdit, List<String> newCollectedLink,
+			List<String> vistedLink) {
+		try {
+			if (!vistedLink.contains(urlEdit)) {
+				vistedLink.add(urlEdit);
+				initHttpClient(httpclient);
+
+				HttpGet httpGetStepOne = new HttpGet(urlEdit);
+				setHeader(httpGetStepOne);
+				String responseBody = httpclient.execute(httpGetStepOne,
+						responseHandler);
+				// System.out.println(responseBody);
+				// lay ra noi dung xml
+				CleanerProperties props = new CleanerProperties();
+				// set some properties to non-default values
+				props.setTranslateSpecialEntities(true);
+				props.setTransResCharsToNCR(true);
+				props.setOmitComments(true);
+				// do parsing
+				TagNode tagNode = new HtmlCleaner(props)
+						.clean(new StringReader(responseBody));
+				// serialize to xml file
+				String xml = new PrettyXmlSerializer(props).getAsString(
+						tagNode, "utf-8");
+				// System.out.println(xml);
+				SAXReader reader = new SAXReader();
+				Document document = reader.read(new StringReader(xml));
+				// <input type="hidden" value="0" id="vB_Editor_001_mode"
+				// name="wysiwyg">
+				List<?> list = document
+						.selectNodes("//div[@class='title']/a/@href");
+				for (Object object : list) {
+					Node node = (Node) object;
+					String newUrl = node.getText();
+					if (!newCollectedLink.contains(newUrl)
+							&& !vistedLink.contains(newCollectedLink)) {
+						newCollectedLink.add(newUrl);
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace(System.out);
+		}
+	}
+
+	protected Connection getConnection(String url) throws SQLException {
+		try {
+			Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
+			Connection conn = null;
+			Properties connectionProps = new Properties();
+			connectionProps.put("user", "");
+			connectionProps.put("password", "");
+			conn = DriverManager.getConnection(url, connectionProps);
+			return conn;
+		} catch (ClassNotFoundException e) {
+
+		}
+		return null;
+
+	}
+
 	public static void main(String[] args) throws Exception {
 		PasswordUtils.loadKeyStore();
 		MuaCungLoanTin cungLoanTin = new MuaCungLoanTin();
@@ -312,6 +598,16 @@ public class MuaCungLoanTin {
 		String[] startUrls = properties.getProperty("startUrl", "").split(",");
 		String facebook = properties.getProperty("facebook", "0");
 		String yahoo = properties.getProperty("yahoo", "1");
+		String databaseUrl = properties.getProperty("databaseUrl",
+				"jdbc:derby:muachung");
+		List<String> collectionLink;
+		if (!cungLoanTin.haveCollectionLink()) {
+			List<String> vistedLink = cungLoanTin.collectionLink(startUrls);
+			cungLoanTin.createCollectionLinkFile(vistedLink);
+			collectionLink = vistedLink;
+		} else {
+			collectionLink = cungLoanTin.loadCollectionLink();
+		}
 		for (int i = 0; i < usernames.length; i++) {
 			String username = usernames[i];
 			String password;
@@ -321,27 +617,14 @@ public class MuaCungLoanTin {
 				password = PasswordUtils.decryt(passwords[i]);
 			}
 			if (cungLoanTin.login(username, password)) {
-				List<String> collectedLink = new ArrayList<String>();
-				List<String> newCollectedLink = new ArrayList<String>();
-				List<String> temp;
-				for (int j = 0; j < startUrls.length; j++) {
-					String startUrl = startUrls[j];
-					collectedLink.add(startUrl);
-				}
-				do {
-					for (Iterator iterator = collectedLink.iterator(); iterator
-							.hasNext();) {
-						String startUrl = (String) iterator.next();
-						cungLoanTin.post(null, startUrl, null, new Object[] {
-								newCollectedLink, facebook, yahoo });
-					}
-					collectedLink.clear();
-					temp = collectedLink;
-					collectedLink = newCollectedLink;
-					newCollectedLink = temp;
 
-				} while (!(collectedLink.isEmpty() && newCollectedLink
-						.isEmpty()));
+				for (Iterator<String> iterator = collectionLink.iterator(); iterator
+						.hasNext();) {
+					String startUrl = (String) iterator.next();
+					cungLoanTin.post2(null, startUrl, null, new Object[] {
+							username, facebook, yahoo,databaseUrl });
+				}
+
 				cungLoanTin.logout();
 			}
 		}
