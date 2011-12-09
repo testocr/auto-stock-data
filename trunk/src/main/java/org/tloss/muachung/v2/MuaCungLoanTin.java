@@ -291,6 +291,53 @@ public class MuaCungLoanTin {
 
 	}
 
+	public void deleleVistedLink(String dburl, String url, String user) {
+		Connection con;
+		try {
+			con = getConnection(dburl);
+			if (con != null) {
+				PreparedStatement stmt = null;
+				String query = "delete from muachung where url =? and username=?";
+				try {
+					stmt = con.prepareStatement(query);
+					stmt.setString(1, url);
+					stmt.setString(2, user);
+					stmt.executeUpdate();
+					con.commit();
+
+				} catch (SQLException e) {
+					e.printStackTrace(System.out);
+				} finally {
+					if (stmt != null) {
+						try {
+							stmt.close();
+						} catch (SQLException e) {
+							e.printStackTrace(System.out);
+						}
+					}
+					if (con != null) {
+						try {
+							con.close();
+						} catch (SQLException e) {
+							e.printStackTrace(System.out);
+						}
+					}
+				}
+			}
+
+		} catch (SQLException e1) {
+			e1.printStackTrace(System.out);
+		}
+	}
+
+	public void initStartLink(String dburl, String url[], String user) {
+		if (url != null) {
+			for (int i = 0; i < url.length; i++) {
+				deleleVistedLink(dburl, url[i], user);
+			}
+		}
+	}
+
 	public void saveVistedLink(String dburl, String url, String user) {
 		Connection con;
 		try {
@@ -336,7 +383,7 @@ public class MuaCungLoanTin {
 		boolean result = false;
 		String user = (String) options[0];
 		String dbUrl = (String) options[3];
-		if (isNew(dbUrl,urlEdit, user)) {
+		if (isNew(dbUrl, urlEdit, user)) {
 			saveVistedLink(dbUrl, urlEdit, user);
 			initHttpClient(httpclient);
 
@@ -616,13 +663,14 @@ public class MuaCungLoanTin {
 			} else {
 				password = PasswordUtils.decryt(passwords[i]);
 			}
+			cungLoanTin.initStartLink(databaseUrl, startUrls, username);
 			if (cungLoanTin.login(username, password)) {
 
 				for (Iterator<String> iterator = collectionLink.iterator(); iterator
 						.hasNext();) {
 					String startUrl = (String) iterator.next();
 					cungLoanTin.post2(null, startUrl, null, new Object[] {
-							username, facebook, yahoo,databaseUrl });
+							username, facebook, yahoo, databaseUrl });
 				}
 
 				cungLoanTin.logout();
