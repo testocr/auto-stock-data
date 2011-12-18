@@ -641,7 +641,7 @@ public class MuaCungLoanTin {
 		} else {
 			usernames = properties.getProperty("username", "").split(",");
 		}
-		String[] passwords = properties.getProperty("passowrd", "").split(",");
+		String[] passwords = properties.getProperty("password", "").split(",");
 		String[] startUrls = properties.getProperty("startUrl", "").split(",");
 		String facebook = properties.getProperty("facebook", "0");
 		String yahoo = properties.getProperty("yahoo", "1");
