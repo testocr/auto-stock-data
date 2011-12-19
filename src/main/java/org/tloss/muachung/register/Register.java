@@ -129,6 +129,7 @@ public class Register {
 		httpPost.setEntity(new UrlEncodedFormEntity(nvps, HTTP.UTF_8));
 		responseBody = httpclient.execute(httpPost, responseHandler);
 		String username = buildUserName(userData);
+		System.out.println("username: " +username);
 		if (responseHandler.isMustFollow()) {
 			httpGetStepOne = new HttpGet(
 					"https://server403.webhostingpad.com:2083" + responseBody);
@@ -407,9 +408,9 @@ public class Register {
 		String sizeMustWait = properties.getProperty("sizeMustWait", "2");
 		checkMail.setMaxMustWait(Long.valueOf(maxMustWait));
 		checkMail.setSizeMustWait(Long.valueOf(sizeMustWait));
-		if (checkMail.loginYahoo(yahooUsername, yahooPassword)) {
+		//if (checkMail.loginYahoo(yahooUsername, yahooPassword)) {
 			checkMail.register(ctrUsername, ctrPassword, userdata, password,
 					phone);
-		}
+		//}
 	}
 }
