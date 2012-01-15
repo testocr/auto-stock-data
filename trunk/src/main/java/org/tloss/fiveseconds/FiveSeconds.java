@@ -19,7 +19,6 @@ import javax.script.ScriptException;
 import org.apache.http.HttpVersion;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -32,14 +31,14 @@ import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.protocol.HTTP;
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
 import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.PrettyXmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.tloss.common.Article;
-import org.tloss.common.DefaultResponseHandler;
-import org.tloss.multiget.xhtt.XHTTGetArticle;
+import org.tloss.common.DefaultResponseAndFollowHandler;
 import org.tloss.multipos.PostArticle;
 import org.tloss.multipos.tinhtevn.TinhTeVNPost;
 
@@ -49,7 +48,7 @@ import org.tloss.multipos.tinhtevn.TinhTeVNPost;
  */
 public class FiveSeconds implements PostArticle {
 	HttpClient httpclient = new DefaultHttpClient();
-	ResponseHandler<String> responseHandler = new DefaultResponseHandler();
+	DefaultResponseAndFollowHandler responseHandler = new DefaultResponseAndFollowHandler();
 
 	public void setHeader(AbstractHttpMessage http) {
 		http.setHeader(
@@ -330,7 +329,7 @@ public class FiveSeconds implements PostArticle {
 		// do parsing
 		TagNode tagNode;
 		// serialize to xml file
-		String xml ;
+		String xml;
 		SAXReader reader = new SAXReader();
 		Document document;
 		// neu lay dc ma securitytoken
@@ -390,12 +389,54 @@ public class FiveSeconds implements PostArticle {
 		return result;
 	}
 
+	public void selectThread(String topicURL, String topicID) throws Exception {
+		HttpGet httpGetStepOne = new HttpGet(topicURL);
+		setHeader(httpGetStepOne);
+		String responseBody = httpclient.execute(httpGetStepOne,
+				responseHandler);
+		// lay ra noi dung xml
+		CleanerProperties props = new CleanerProperties();
+		// set some properties to non-default values
+		props.setTranslateSpecialEntities(true);
+		props.setTransResCharsToNCR(true);
+		props.setOmitComments(true);
+		// do parsing
+		TagNode tagNode = new HtmlCleaner(props).clean(new StringReader(
+				responseBody));
+		// serialize to xml file
+		String xml = new PrettyXmlSerializer(props).getAsString(tagNode,
+				"utf-8");
+		SAXReader reader = new SAXReader();
+		Document document = reader.read(new StringReader(xml));
+		// <input type="hidden" value="0" id="vB_Editor_001_mode"
+		// name="wysiwyg">
+		String xpath = "//tbody[@id='threadbits_forum_"
+				+ topicID
+				+ "']/tr[child::td/text()='Đề tài bình thường']/./following-sibling::tr/td//a[string-length(@href) >30 and substring(@href,1,30)='showthread.php?goto=newpost&t=']/@href";
+		List<?> list = document.selectNodes(xpath);
+		String url;
+		for (Object object : list) {
+			Node element = (Node) object;
+			url = "http://www.5giay.vn/" + element.getText();
+			httpGetStepOne = new HttpGet(url);
+			setHeader(httpGetStepOne);
+			responseBody = httpclient.execute(httpGetStepOne, responseHandler);
+			System.out.println(responseBody);
+			if (responseHandler.isMustFollow()) {
+				System.out.println(responseBody);
+			}
+		}
+
+	}
+
 	public static void main(String[] args) throws Exception {
 
 		FiveSeconds article = new FiveSeconds();
 		article.login("myname74119", null, true, new Object[] {
 				"25f9e794323b453885f5181f1b624d0b",
 				"25f9e794323b453885f5181f1b624d0b" });
+		article.selectThread("http://www.5giay.vn/forumdisplay.php?f=126",
+				"126");
 		// 57 -WINDOWS 7 :: PHẦN MỀM -GAME
 		// XHTTGetArticle getArticle = new XHTTGetArticle();
 		// Article article2 =
