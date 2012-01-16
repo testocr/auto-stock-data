@@ -391,6 +391,9 @@ public class FiveSeconds implements PostArticle {
 		return result;
 	}
 
+	int maxUpForOneTopic = 3;
+	String[] listTopic = new String[] { "22", "126", "145", "140", "14", "24" };
+
 	public void selectThread(String topicURL, String topicID, String loginID,
 			String message) throws Exception {
 		HttpGet httpGetStepOne = new HttpGet(topicURL);
@@ -419,9 +422,11 @@ public class FiveSeconds implements PostArticle {
 		List<?> list = document.selectNodes(xpath);
 		String url;
 		String t;
-		for (Object object : list) {
-			Node element = (Node) object;
+
+		for (int i = 0; i < maxUpForOneTopic && i < list.size(); i++) {
+			Node element = (Node) list.get(i);
 			url = "http://www.5giay.vn/" + element.getText();
+			System.out.println(url);
 			t = element.getText().substring(17);
 			httpGetStepOne = new HttpGet(url);
 			setHeader(httpGetStepOne);
@@ -468,14 +473,23 @@ public class FiveSeconds implements PostArticle {
 				nvps.add(new BasicNameValuePair("p", "who cares"));
 				nvps.add(new BasicNameValuePair("parseurl", "1"));
 				nvps.add(new BasicNameValuePair("loggedinuser", loginID));
-				nvps.add(new BasicNameValuePair("sbutton", "Gá»i Tráº£ Lá»i"));
+				nvps.add(new BasicNameValuePair("sbutton", "Gởi Trả Lời"));
 				httpPost.setEntity(new UrlEncodedFormEntity(nvps, HTTP.UTF_8));
 				setHeader(httpPost);
-				httpPost.setHeader("Referer", "http://www.5giay.vn/showthread.php?t="+t);
+				httpPost.setHeader("Referer",
+						"http://www.5giay.vn/showthread.php?t=" + t);
 				responseBody = httpclient.execute(httpPost, responseHandler);
 			}
 		}
 
+	}
+
+	public void up() throws Exception {
+		for (int i = 0; i < listTopic.length; i++) {
+			selectThread("http://www.5giay.vn/forumdisplay.php?f="
+					+ listTopic[i], listTopic[i], "100080155",
+					"Up phụ bạn, rảng qua up phụ mình với nhé!<br/>");
+		}
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -484,9 +498,8 @@ public class FiveSeconds implements PostArticle {
 		article.login("myname74119", null, true, new Object[] {
 				"25f9e794323b453885f5181f1b624d0b",
 				"25f9e794323b453885f5181f1b624d0b" });
-		article.selectThread("http://www.5giay.vn/forumdisplay.php?f=126",
-				"126", "100080155",
-				"Up phá»¥ báº¡n, ráº£ng qua up phá»¥ mÃ¬nh vá»i nhÃ©<br/>");
+		article.up();
+
 		// 57 -WINDOWS 7 :: PHẦN MỀM -GAME
 		// XHTTGetArticle getArticle = new XHTTGetArticle();
 		// Article article2 =
