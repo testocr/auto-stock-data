@@ -62,6 +62,8 @@ public class FiveSeconds implements PostArticle {
 		http.setHeader("Connection", "keep-alive");
 		http.setHeader("Pragma", "no-cache");
 		http.setHeader("Cache-Control", "no-cache");
+		http.setHeader("Host", "www.5giay.vn");
+
 	}
 
 	public void initHttpClient(HttpClient httpclient) {
@@ -118,7 +120,7 @@ public class FiveSeconds implements PostArticle {
 			break;
 		case PostArticle.POST_URL:
 			if (options != null && options.length > 0) {
-				url = "http://www.tinhte.vn/newthread.php?do=postthread&f="
+				url = "http://www.5giay.vn/newreply.php?do=postreply&t="
 						+ options[0];
 			}
 			break;
@@ -389,7 +391,8 @@ public class FiveSeconds implements PostArticle {
 		return result;
 	}
 
-	public void selectThread(String topicURL, String topicID) throws Exception {
+	public void selectThread(String topicURL, String topicID, String loginID,
+			String message) throws Exception {
 		HttpGet httpGetStepOne = new HttpGet(topicURL);
 		setHeader(httpGetStepOne);
 		String responseBody = httpclient.execute(httpGetStepOne,
@@ -400,30 +403,76 @@ public class FiveSeconds implements PostArticle {
 		props.setTranslateSpecialEntities(true);
 		props.setTransResCharsToNCR(true);
 		props.setOmitComments(true);
+		HtmlCleaner cleaner = new HtmlCleaner(props);
 		// do parsing
-		TagNode tagNode = new HtmlCleaner(props).clean(new StringReader(
-				responseBody));
+		TagNode tagNode = cleaner.clean(new StringReader(responseBody));
+		PrettyXmlSerializer serializer = new PrettyXmlSerializer(props);
 		// serialize to xml file
-		String xml = new PrettyXmlSerializer(props).getAsString(tagNode,
-				"utf-8");
+		String xml = serializer.getAsString(tagNode, "utf-8");
 		SAXReader reader = new SAXReader();
 		Document document = reader.read(new StringReader(xml));
 		// <input type="hidden" value="0" id="vB_Editor_001_mode"
 		// name="wysiwyg">
 		String xpath = "//tbody[@id='threadbits_forum_"
 				+ topicID
-				+ "']/tr[child::td/text()='Đề tài bình thường']/./following-sibling::tr/td//a[string-length(@href) >30 and substring(@href,1,30)='showthread.php?goto=newpost&t=']/@href";
+				+ "']/tr[child::td/text()='Đề tài bình thường']/./following-sibling::tr/td//a[ string-length(@id) >13 and substring(@id,1,13) = 'thread_title_' and string-length(@href) >17 and substring(@href,1,17)='showthread.php?t=']/@href";
 		List<?> list = document.selectNodes(xpath);
 		String url;
+		String t;
 		for (Object object : list) {
 			Node element = (Node) object;
 			url = "http://www.5giay.vn/" + element.getText();
+			t = element.getText().substring(17);
 			httpGetStepOne = new HttpGet(url);
 			setHeader(httpGetStepOne);
 			responseBody = httpclient.execute(httpGetStepOne, responseHandler);
-			System.out.println(responseBody);
-			if (responseHandler.isMustFollow()) {
-				System.out.println(responseBody);
+			/**
+			 * message Up phá»¥ báº¡n, ráº£ng qua up phá»¥ mÃ¬nh vá»i nhÃ©<br/>
+			 * wysiwyg 1<br/>
+			 * styleid 0<br/>
+			 * signature 1<br/>
+			 * fromquickreply 1<br/>
+			 * s <br/>
+			 * securitytoken 1326680880-d9991c231860f33f173fad8f30595563e8d97b06<br/>
+			 * do postreply<br/>
+			 * t 4403864<br/>
+			 * p who cares<br/>
+			 * parseurl 1<br/>
+			 * loggedinuser 100080155<br/>
+			 * sbutton Gá»i Tráº£ Lá»i<br/>
+			 */
+			tagNode = cleaner.clean(new StringReader(responseBody));
+			xml = serializer.getAsString(tagNode, "utf-8");
+			document = reader.read(new StringReader(xml));
+			list = document
+					.selectNodes("//input[ @name='securitytoken' ]/@value");
+			String securitytoken = null;
+			for (Object object1 : list) {
+				Node element1 = (Node) object1;
+				securitytoken = element1.getText();
+			}
+			if (securitytoken != null) {
+				// newreply.php?do=postreply&t=4439655
+				HttpPost httpPost = new HttpPost(getUrl(POST_URL,
+						new Object[] { t }));
+				List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+				nvps.add(new BasicNameValuePair("message", message));
+				nvps.add(new BasicNameValuePair("wysiwyg", "1"));
+				nvps.add(new BasicNameValuePair("styleid", "0"));
+				nvps.add(new BasicNameValuePair("signature", "1"));
+				nvps.add(new BasicNameValuePair("fromquickreply", "1"));
+				nvps.add(new BasicNameValuePair("s", ""));
+				nvps.add(new BasicNameValuePair("securitytoken", securitytoken));
+				nvps.add(new BasicNameValuePair("do", "postreply"));
+				nvps.add(new BasicNameValuePair("t", t));
+				nvps.add(new BasicNameValuePair("p", "who cares"));
+				nvps.add(new BasicNameValuePair("parseurl", "1"));
+				nvps.add(new BasicNameValuePair("loggedinuser", loginID));
+				nvps.add(new BasicNameValuePair("sbutton", "Gá»i Tráº£ Lá»i"));
+				httpPost.setEntity(new UrlEncodedFormEntity(nvps, HTTP.UTF_8));
+				setHeader(httpPost);
+				httpPost.setHeader("Referer", "http://www.5giay.vn/showthread.php?t="+t);
+				responseBody = httpclient.execute(httpPost, responseHandler);
 			}
 		}
 
@@ -436,7 +485,8 @@ public class FiveSeconds implements PostArticle {
 				"25f9e794323b453885f5181f1b624d0b",
 				"25f9e794323b453885f5181f1b624d0b" });
 		article.selectThread("http://www.5giay.vn/forumdisplay.php?f=126",
-				"126");
+				"126", "100080155",
+				"Up phá»¥ báº¡n, ráº£ng qua up phá»¥ mÃ¬nh vá»i nhÃ©<br/>");
 		// 57 -WINDOWS 7 :: PHẦN MỀM -GAME
 		// XHTTGetArticle getArticle = new XHTTGetArticle();
 		// Article article2 =
