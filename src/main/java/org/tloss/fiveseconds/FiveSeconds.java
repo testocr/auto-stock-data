@@ -449,10 +449,10 @@ public class FiveSeconds implements PostArticle {
 			tagNode = cleaner.clean(new StringReader(responseBody));
 			xml = serializer.getAsString(tagNode, "utf-8");
 			document = reader.read(new StringReader(xml));
-			list = document
+			List<?> list2 = document
 					.selectNodes("//input[ @name='securitytoken' ]/@value");
 			String securitytoken = null;
-			for (Object object1 : list) {
+			for (Object object1 : list2) {
 				Node element1 = (Node) object1;
 				securitytoken = element1.getText();
 			}
