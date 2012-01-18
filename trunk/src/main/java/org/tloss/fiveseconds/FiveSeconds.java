@@ -430,6 +430,7 @@ public class FiveSeconds implements PostArticle {
 			t = element.getText().substring(17);
 			httpGetStepOne = new HttpGet(url);
 			setHeader(httpGetStepOne);
+			mustWait();
 			responseBody = httpclient.execute(httpGetStepOne, responseHandler);
 			/**
 			 * message Up phá»¥ báº¡n, ráº£ng qua up phá»¥ mÃ¬nh vá»i nhÃ©<br/>
@@ -479,9 +480,26 @@ public class FiveSeconds implements PostArticle {
 				httpPost.setHeader("Referer",
 						"http://www.5giay.vn/showthread.php?t=" + t);
 				responseBody = httpclient.execute(httpPost, responseHandler);
+				if(responseHandler.isMustFollow()){
+					httpGetStepOne =  new HttpGet(responseBody);
+					setHeader(httpGetStepOne);
+					responseBody = httpclient.execute(httpGetStepOne, responseHandler);
+				}
+				mustWait();
 			}
 		}
 
+	}
+
+	long maxMustWait = 2;
+	long sizeMustWait = 5;
+
+	public synchronized void mustWait() throws InterruptedException {
+
+		long max = maxMustWait;
+		long size = sizeMustWait;
+		long real = Math.round(max + size * Math.random());
+		wait(real * 1000);
 	}
 
 	public void up() throws Exception {
@@ -489,6 +507,7 @@ public class FiveSeconds implements PostArticle {
 			selectThread("http://www.5giay.vn/forumdisplay.php?f="
 					+ listTopic[i], listTopic[i], "100080155",
 					"Up phụ bạn, rảng qua up phụ mình với nhé!<br/>");
+			mustWait();
 		}
 	}
 
