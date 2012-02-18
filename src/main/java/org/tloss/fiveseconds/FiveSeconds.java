@@ -392,7 +392,9 @@ public class FiveSeconds implements PostArticle {
 	}
 
 	int maxUpForOneTopic = 3;
-	String[] listTopic = new String[] { "22", "126", "145", "140", "14", "24" };
+	/*String[] listTopic = new String[] { "22", "126", "145", "140", "14", "24" }; */
+	String[] listTopic = new String[] { "89", "44", "55", "41", "28", "43" };
+	
 
 	public void selectThread(String topicURL, String topicID, String loginID,
 			String message) throws Exception {
@@ -491,7 +493,7 @@ public class FiveSeconds implements PostArticle {
 
 	}
 
-	long maxMustWait = 2;
+	long maxMustWait = 10;
 	long sizeMustWait = 5;
 
 	public synchronized void mustWait() throws InterruptedException {
