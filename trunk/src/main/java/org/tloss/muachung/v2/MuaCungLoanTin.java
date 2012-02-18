@@ -599,7 +599,7 @@ public class MuaCungLoanTin {
 				// <input type="hidden" value="0" id="vB_Editor_001_mode"
 				// name="wysiwyg">
 				List<?> list = document
-						.selectNodes("//div[@class='title']/a/@href");
+						.selectNodes("//div[@class='title' or @class='titleBoxName' or @class='SellingTitle mTop5']/a/@href");
 				for (Object object : list) {
 					Node node = (Node) object;
 					String newUrl = node.getText();
@@ -608,6 +608,17 @@ public class MuaCungLoanTin {
 						newCollectedLink.add(newUrl);
 					}
 				}
+				list = document
+						.selectNodes("//div[@class='blockSoldItem blockSoldHide1 mTop10 blockSoldItemBorder']/div/a/@href");
+				for (Object object : list) {
+					Node node = (Node) object;
+					String newUrl = node.getText();
+					if (!newCollectedLink.contains(newUrl)
+							&& !vistedLink.contains(newCollectedLink)) {
+						newCollectedLink.add(newUrl);
+					}
+				}
+				
 			}
 		} catch (Exception e) {
 			e.printStackTrace(System.out);

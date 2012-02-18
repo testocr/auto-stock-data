@@ -22,6 +22,7 @@ import org.apache.http.util.EntityUtils;
  * 
  */
 public class DefaultResponseAndFollowHandler implements ResponseHandler<String> {
+	
 	boolean mustFollow;
 
 	/**
