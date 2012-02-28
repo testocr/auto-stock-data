@@ -508,7 +508,7 @@ public class FiveSeconds implements PostArticle {
 		for (int i = 0; i < listTopic.length; i++) {
 			selectThread("http://www.5giay.vn/forumdisplay.php?f="
 					+ listTopic[i], listTopic[i], "100080155",
-					"Up phụ bạn, rảng qua up phụ mình với nhé!<br/>");
+					"Up phụ bạn, rảng qua up phụ mình nhé!<br/>");
 			mustWait();
 		}
 	}

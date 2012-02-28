@@ -377,12 +377,23 @@ public class MuaCungLoanTin {
 		}
 	}
 
+	public String getMoney(Document document) {
+		// <b id="customer_gold">42.600</b>
+		Node node = document.selectSingleNode("//b[@id='customer_gold']");
+		if (node != null) {
+			return node.getText();
+		}
+		return "";
+	}
+
 	public boolean post2(Article article, String urlEdit, String urlPost,
 			Object[] options) throws Exception {
 
-		boolean result = false;
+		boolean result = true;
 		String user = (String) options[0];
 		String dbUrl = (String) options[3];
+		String oldMoney;
+		String newMoney;
 		if (isNew(dbUrl, urlEdit, user)) {
 			saveVistedLink(dbUrl, urlEdit, user);
 			initHttpClient(httpclient);
@@ -409,13 +420,17 @@ public class MuaCungLoanTin {
 			Document document = reader.read(new StringReader(xml));
 			// <input type="hidden" value="0" id="vB_Editor_001_mode"
 			// name="wysiwyg">
+			oldMoney = getMoney(document);
 			List<?> list = document
 					.selectNodes("//a[contains(@class,'buttonLoantin')]");
+			boolean hasLoanButton = false;
+			boolean isLoanSuccess = false;
 			for (Object object : list) {
 				Element element = (Element) object;
 				if (element.attribute("id") != null
 						&& element.attributeValue("onclick") != null) {
 					// btnLoantin1300
+					hasLoanButton = true;
 					String id = element.attribute("id").getValue();
 					id = id.substring(10);
 					HttpPost httpPost = new HttpPost(
@@ -436,11 +451,44 @@ public class MuaCungLoanTin {
 					responseBody = httpclient
 							.execute(httpPost, responseHandler);
 
-					System.out.println("proccess id: " + id + ", result: "
-							+ responseBody);
+					System.out.println("proccess id: " + id + ", oldMoney: "
+							+ oldMoney + ", result: " + responseBody);
+					try {
+						isLoanSuccess = isLoanSuccess
+								|| (Boolean) invocableEngine.invokeFunction(
+										"checkLoantinSucess", responseBody);
+					} catch (Exception e) {
+
+					}
 				}
 			}
-			result = true;
+			if (hasLoanButton && isLoanSuccess) {
+				httpGetStepOne = new HttpGet(urlEdit);
+				setHeader(httpGetStepOne);
+				responseBody = httpclient.execute(httpGetStepOne,
+						responseHandler);
+				// System.out.println(responseBody);
+				// lay ra noi dung xml
+				props = new CleanerProperties();
+				// set some properties to non-default values
+				props.setTranslateSpecialEntities(true);
+				props.setTransResCharsToNCR(true);
+				props.setOmitComments(true);
+				// do parsing
+				tagNode = new HtmlCleaner(props).clean(new StringReader(
+						responseBody));
+				// serialize to xml file
+				xml = new PrettyXmlSerializer(props).getAsString(tagNode,
+						"utf-8");
+				// System.out.println(xml);
+				reader = new SAXReader();
+				document = reader.read(new StringReader(xml));
+				newMoney = getMoney(document);
+				if ((!"".equals(oldMoney)) && (!"".equals(newMoney))
+						&& newMoney.equals(oldMoney)) {
+					result = false;
+				}
+			}
 		}
 
 		return result;
@@ -618,7 +666,7 @@ public class MuaCungLoanTin {
 						newCollectedLink.add(newUrl);
 					}
 				}
-				
+
 			}
 		} catch (Exception e) {
 			e.printStackTrace(System.out);
@@ -675,13 +723,15 @@ public class MuaCungLoanTin {
 				password = PasswordUtils.decryt(passwords[i]);
 			}
 			cungLoanTin.initStartLink(databaseUrl, startUrls, username);
+			// System.out.println("username:" +username+"password:"+password);
 			if (cungLoanTin.login(username, password)) {
-
-				for (Iterator<String> iterator = collectionLink.iterator(); iterator
-						.hasNext();) {
+				boolean cont = true;
+				for (Iterator<String> iterator = collectionLink.iterator(); cont
+						&& iterator.hasNext();) {
 					String startUrl = (String) iterator.next();
-					cungLoanTin.post2(null, startUrl, null, new Object[] {
-							username, facebook, yahoo, databaseUrl });
+					cont = cungLoanTin.post2(null, startUrl, null,
+							new Object[] { username, facebook, yahoo,
+									databaseUrl });
 				}
 
 				cungLoanTin.logout();
