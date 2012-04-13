@@ -361,7 +361,7 @@ public class FiveSeconds implements PostArticle {
 		responseBody = httpclient.execute(httpPost, responseHandler);
 
 		if (responseBody != null
-				&& responseBody.indexOf("đã đăng nhập thành công") > 0) {
+				&& responseBody.indexOf("Cám ơn bạn đã đăng nhập") > 0) {
 
 			//
 			tagNode = new HtmlCleaner(props).clean(new StringReader(
@@ -392,8 +392,8 @@ public class FiveSeconds implements PostArticle {
 	}
 
 	int maxUpForOneTopic = 3;
-	/*String[] listTopic = new String[] { "22", "126", "145", "140", "14", "24" }; */
-	String[] listTopic = new String[] { "89", "44", "55", "41", "28", "43" };
+	String[] listTopic = new String[] { "22", "126", "145", "140", "14", "24" }; 
+	/*String[] listTopic = new String[] { "89", "44", "55", "41", "28", "43" };*/
 	
 
 	public void selectThread(String topicURL, String topicID, String loginID,
@@ -421,15 +421,21 @@ public class FiveSeconds implements PostArticle {
 		String xpath = "//tbody[@id='threadbits_forum_"
 				+ topicID
 				+ "']/tr[child::td/text()='Đề tài bình thường']/./following-sibling::tr/td//a[ string-length(@id) >13 and substring(@id,1,13) = 'thread_title_' and string-length(@href) >17 and substring(@href,1,17)='showthread.php?t=']/@href";
+		
+		xpath = "//ol[@id='threads']/li//h3[@class='threadtitle']/a[ string-length(@id) >13 and substring(@id,1,13) = 'thread_title_']/@href";
 		List<?> list = document.selectNodes(xpath);
 		String url;
 		String t;
 
 		for (int i = 0; i < maxUpForOneTopic && i < list.size(); i++) {
 			Node element = (Node) list.get(i);
+			//url = /*"http://www.5giay.vn/" +*/ element.getText();
 			url = "http://www.5giay.vn/" + element.getText();
 			System.out.println(url);
-			t = element.getText().substring(17);
+			//int lastIndex =  element.getText().lastIndexOf("-");
+			int lastIndex =  element.getText().lastIndexOf("=");
+			//t = element.getText().substring(lastIndex+1,element.getText().length()-1);
+			t = element.getText().substring(lastIndex+1);
 			httpGetStepOne = new HttpGet(url);
 			setHeader(httpGetStepOne);
 			mustWait();
@@ -508,7 +514,7 @@ public class FiveSeconds implements PostArticle {
 		for (int i = 0; i < listTopic.length; i++) {
 			selectThread("http://www.5giay.vn/forumdisplay.php?f="
 					+ listTopic[i], listTopic[i], "100080155",
-					"Up phụ bạn, rảng qua up phụ mình nhé!<br/>");
+					"Up phụ bạn, rảnh qua up phụ mình nhé!<br/>");
 			mustWait();
 		}
 	}
