@@ -2,6 +2,7 @@ package org.tloss.common;
 
 import java.io.IOException;
 
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpResponseException;
@@ -22,6 +23,10 @@ public class DefaultResponseHandler implements ResponseHandler<String> {
 		if (entity.getContentEncoding() != null
 				&& "gzip".equals(entity.getContentEncoding().getValue())) {
 			entity = new GzipDecompressingEntity(entity);
+		}
+		Header[] headers = response.getAllHeaders();
+		for(int i=0;i<headers.length;i++){
+			System.out.println(headers[i]);
 		}
 		return entity == null ? null : EntityUtils.toString(entity);
 	}
