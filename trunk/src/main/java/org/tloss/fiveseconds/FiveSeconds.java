@@ -429,13 +429,17 @@ public class FiveSeconds implements PostArticle {
 
 		for (int i = 0; i < maxUpForOneTopic && i < list.size(); i++) {
 			Node element = (Node) list.get(i);
-			//url = /*"http://www.5giay.vn/" +*/ element.getText();
-			url = "http://www.5giay.vn/" + element.getText();
+			url = /*"http://www.5giay.vn/" +*/ element.getText();
+			//TODO for older code
+			//url = "http://www.5giay.vn/" + element.getText();
 			System.out.println(url);
-			//int lastIndex =  element.getText().lastIndexOf("-");
-			int lastIndex =  element.getText().lastIndexOf("=");
-			//t = element.getText().substring(lastIndex+1,element.getText().length()-1);
-			t = element.getText().substring(lastIndex+1);
+			int lastIndex =  element.getText().lastIndexOf("/");
+			//TODO for older code
+			//int lastIndex =  element.getText().lastIndexOf("=");
+			
+			int nextIndex =  element.getText().indexOf("-",lastIndex); t = element.getText().substring(lastIndex+1,nextIndex);
+			//TODO for older code
+			//t = element.getText().substring(lastIndex+1);
 			httpGetStepOne = new HttpGet(url);
 			setHeader(httpGetStepOne);
 			mustWait();
@@ -514,7 +518,7 @@ public class FiveSeconds implements PostArticle {
 		for (int i = 0; i < listTopic.length; i++) {
 			selectThread("http://www.5giay.vn/forumdisplay.php?f="
 					+ listTopic[i], listTopic[i], "100080155",
-					"Up phụ bạn, rảnh qua up phụ mình nhé!<br/>");
+					"Up phụ bạn, rảnh qua up phụ mình link bên dưới nhé!<br/>");
 			mustWait();
 		}
 	}
