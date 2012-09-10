@@ -8,6 +8,7 @@ package org.tloss.fiveseconds;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,13 +27,16 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.params.CookiePolicy;
-import org.apache.http.cookie.Cookie;
+import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.message.AbstractHttpMessage;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HTTP;
+import org.apache.http.protocol.HttpContext;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Node;
@@ -50,9 +54,9 @@ import org.tloss.multipos.tinhtevn.TinhTeVNPost;
  * @author tungt
  * 
  */
-public class FiveSeconds implements PostArticle {
+public class FiveSeconds2 implements PostArticle {
 
-	public FiveSeconds() {
+	public FiveSeconds2() {
 
 	}
 
@@ -76,6 +80,8 @@ public class FiveSeconds implements PostArticle {
 	}
 
 	Invocable invocableEngine;
+	 CookieStore cookieStore = new BasicCookieStore();
+	HttpContext context =  new BasicHttpContext();
 
 	public Invocable initScriptEngine(String data) {
 		ScriptEngineManager mgr = new ScriptEngineManager();
@@ -89,6 +95,7 @@ public class FiveSeconds implements PostArticle {
 	}
 
 	public void initHttpClient(HttpClient httpclient) {
+		
 		httpclient.getParams().setParameter(
 				CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1); // Default
 																			// to
@@ -96,6 +103,7 @@ public class FiveSeconds implements PostArticle {
 																			// 1.0
 		httpclient.getParams().setParameter(
 				CoreProtocolPNames.HTTP_CONTENT_CHARSET, "UTF-8");
+		context.setAttribute(ClientContext.COOKIE_STORE, cookieStore);
 		httpclient.getParams().setParameter(ClientPNames.COOKIE_POLICY,
 				CookiePolicy.BROWSER_COMPATIBILITY);
 		// HttpHost proxy = new HttpHost("172.16.203.1", 8080);
@@ -187,8 +195,8 @@ public class FiveSeconds implements PostArticle {
 
 		HttpGet httpGetStepOne = new HttpGet(urlEdit);
 		setHeader(httpGetStepOne);
-		String responseBody = httpclient.execute(httpGetStepOne,
-				responseHandler);
+		String responseBody = responseHandler.handleResponse(httpclient.execute(httpGetStepOne,
+				context));
 		// lay ra noi dung xml
 		CleanerProperties props = new CleanerProperties();
 		// set some properties to non-default values
@@ -318,9 +326,7 @@ public class FiveSeconds implements PostArticle {
 		return result;
 	}
 
-	public void logout() {
-
-	}
+	public void logout() {}
 
 	public String[] md5hash(String password) throws ScriptException,
 			NoSuchMethodException {
@@ -341,11 +347,59 @@ public class FiveSeconds implements PostArticle {
 		return array;
 
 	}
+	public void antibot() throws Exception {
+		HttpGet htttGet = new HttpGet("http://www.5giay.vn/login.php?do=login");
+		String responseBody = responseHandler.handleResponse(httpclient.execute(htttGet,context));
+		if (responseBody != null) {
+			int index1 = responseBody.indexOf("<script>function toNumbers");
+			if (index1 >= 0) {
+				int index2 = responseBody.indexOf("</script>", index1);
+				if (index2 >= 0) {
+					String javascript = responseBody.substring(index1 + 8,
+							index2);
+					int index3 = javascript.indexOf("document.cookie=");
+					if (index3 >= 0) {
+						String javascript2 = javascript.substring(0,index3);
+						String javascript3 = javascript.substring(index3);
+						String javascript4 = "function slowAES_decrypt(){ return toHex(slowAES.decrypt(c,2,a,b)); }";
+						htttGet = new HttpGet("http://www.5giay.vn/antibot.js");
+						setHeader(htttGet);
+						responseBody =responseHandler.handleResponse(httpclient.execute(htttGet,context));
+						Reader reader2 = new StringReader(responseBody);
+						BufferedReader bf =  new BufferedReader(reader2);
+						StringBuffer buffer = new StringBuffer();
+						String aLine;
+						while ( ( aLine = bf.readLine( ) ) != null ) {
+							buffer.append(aLine);
+						}
+						buffer.append(javascript2);
+						buffer.append(javascript4);
+						initScriptEngine(buffer.toString());
+						Object object = invocableEngine.invokeFunction("slowAES_decrypt");
+					    BasicClientCookie stdCookie = new BasicClientCookie("5giay", object.toString());
+					    stdCookie.setDomain(".5giay.vn");
+					    stdCookie.setPath("/");
+					    cookieStore.addCookie(stdCookie);
+					    htttGet = new HttpGet("http://www.5giay.vn/login.php?do=login&attempt=1");
+						setHeader(htttGet);
+						responseBody =responseHandler.handleResponse(httpclient.execute(htttGet,context));
+						System.out.println(javascript);
+						System.out.println(javascript2);
+						System.out.println(javascript3);
+						System.out.println(object);
+						System.out.println(responseBody);
+					}
+				}
+			}
+		}
+		//http://www.5giay.vn/?attempt=1
+	}
 
 	public boolean login(String username, String password,
 			boolean encrytedPassword, Object[] options) throws Exception {
 		boolean result = false;
 		initHttpClient(httpclient);
+		//antibot();
 		String responseBody;
 		// lay ra noi dung xml
 		CleanerProperties props = new CleanerProperties();
@@ -383,7 +437,7 @@ public class FiveSeconds implements PostArticle {
 				passwords[1]));
 		httpPost.setEntity(new UrlEncodedFormEntity(nvps, HTTP.UTF_8));
 		setHeader(httpPost);
-		responseBody = httpclient.execute(httpPost, responseHandler);
+		responseBody = responseHandler.handleResponse(httpclient.execute(httpPost,context));
 
 		if (responseBody != null
 				&& responseBody.indexOf("Cám ơn bạn đã đăng nhập") > 0) {
@@ -411,7 +465,7 @@ public class FiveSeconds implements PostArticle {
 			result = true;
 			HttpGet htttGet = new HttpGet(nextUrl);
 			setHeader(htttGet);
-			responseBody = httpclient.execute(htttGet, responseHandler);
+			responseBody = responseHandler.handleResponse(httpclient.execute(htttGet,context));
 		} else if (responseBody != null) {
 			int index1 = responseBody.indexOf("<script>function toNumbers");
 			if (index1 >= 0) {
@@ -424,7 +478,10 @@ public class FiveSeconds implements PostArticle {
 						String javascript2 = javascript.substring(0,index3);
 						String javascript3 = javascript.substring(index3);
 						String javascript4 = "function slowAES_decrypt(){ return toHex(slowAES.decrypt(c,2,a,b)); }";
-						InputStreamReader reader2 = new InputStreamReader(FiveSeconds.class.getResourceAsStream("antibot.js"));
+						HttpGet htttGet = new HttpGet("http://www.5giay.vn/antibot.js");
+						setHeader(htttGet);
+						responseBody =responseHandler.handleResponse(httpclient.execute(htttGet,context));
+						Reader reader2 = new StringReader(responseBody);
 						BufferedReader bf =  new BufferedReader(reader2);
 						StringBuffer buffer = new StringBuffer();
 						String aLine;
@@ -435,20 +492,62 @@ public class FiveSeconds implements PostArticle {
 						buffer.append(javascript4);
 						initScriptEngine(buffer.toString());
 						Object object = invocableEngine.invokeFunction("slowAES_decrypt");
-					    CookieStore cookieStore = httpclient.getCookieStore();
 					    BasicClientCookie stdCookie = new BasicClientCookie("5giay", object.toString());
-					    stdCookie.setDomain(".5giay.vn");
+					    stdCookie.setDomain("5giay.vn");
 					    stdCookie.setPath("/");
 					    cookieStore.addCookie(stdCookie);
-					    HttpGet htttGet = new HttpGet("http://www.5giay.vn/login.php?do=login&attempt=1");
+					    htttGet = new HttpGet("http://www.5giay.vn/login.php?do=login&attempt=1");
 						setHeader(htttGet);
-						responseBody = httpclient.execute(htttGet, responseHandler);
+						responseBody =responseHandler.handleResponse(httpclient.execute(htttGet,context));
 						System.out.println(responseBody.indexOf(username));
 						System.out.println(javascript);
 						System.out.println(javascript2);
 						System.out.println(javascript3);
 						System.out.println(object);
 						System.out.println(responseBody);
+						httpPost = new HttpPost(getUrl(LOGIN_POST_URL, null));
+						nvps = new ArrayList<NameValuePair>();
+						nvps.add(new BasicNameValuePair("vb_login_username", username));
+						nvps.add(new BasicNameValuePair("cookieuser", "1"));
+						nvps.add(new BasicNameValuePair("vb_login_password", ""));
+						nvps.add(new BasicNameValuePair("s", ""));
+						nvps.add(new BasicNameValuePair("securitytoken", "guest"));
+						nvps.add(new BasicNameValuePair("do", "login"));
+						nvps.add(new BasicNameValuePair("vb_login_md5password", passwords[0]));
+						nvps.add(new BasicNameValuePair("vb_login_md5password_utf",
+								passwords[1]));
+						httpPost.setEntity(new UrlEncodedFormEntity(nvps, HTTP.UTF_8));
+						setHeader(httpPost);
+						responseBody = responseHandler.handleResponse(httpclient.execute(httpPost,context));
+
+						if (responseBody != null
+								&& responseBody.indexOf("Cám ơn bạn đã đăng nhập") > 0) {
+
+							//
+							tagNode = new HtmlCleaner(props).clean(new StringReader(
+									responseBody));
+							// serialize to xml file
+							xml = new PrettyXmlSerializer(props).getAsString(tagNode, "utf-8");
+							reader = new SAXReader();
+							document = reader.read(new StringReader(xml));
+							List list = document.selectNodes("//meta[@http-equiv='Refresh']");
+							// content="2; URL=http://www.tinhte.vn/forum.php?s=d9056bfd27c00b24feeac3f8a7e14baa"
+							String nextUrl = "";
+							for (Object object2 : list) {
+								Element element = (Element) object2;
+								if (element.attribute("content") != null) {
+									nextUrl = element.attribute("content").getValue();
+									if (nextUrl.indexOf("URL=") > 0) {
+										nextUrl = nextUrl
+												.substring(nextUrl.indexOf("URL=") + 4);
+									}
+								}
+							}
+							result = true;
+							htttGet = new HttpGet(nextUrl);
+							setHeader(htttGet);
+							responseBody = responseHandler.handleResponse(httpclient.execute(htttGet,context));
+						} 
 					}
 				}
 			}
@@ -457,7 +556,7 @@ public class FiveSeconds implements PostArticle {
 	}
 
 	int maxUpForOneTopic = 3;
-	String[] listTopic = new String[] { "22", "126", "145", "140", "14", "24" };
+	String[] listTopic = new String[] { /*"22", "126", "145","140", "14",*/ "24" ,"43"};
 
 	/* String[] listTopic = new String[] { "89", "44", "55", "41", "28", "43" }; */
 
@@ -465,8 +564,14 @@ public class FiveSeconds implements PostArticle {
 			String message) throws Exception {
 		HttpGet httpGetStepOne = new HttpGet(topicURL);
 		setHeader(httpGetStepOne);
-		String responseBody = httpclient.execute(httpGetStepOne,
-				responseHandler);
+		String responseBody = responseHandler.handleResponse(httpclient.execute(httpGetStepOne,
+				context));
+		if(responseHandler.isMustFollow()){
+			httpGetStepOne = new HttpGet(responseBody);
+			setHeader(httpGetStepOne);
+			responseBody = responseHandler.handleResponse(httpclient.execute(httpGetStepOne,
+					context));
+		}
 		// lay ra noi dung xml
 		CleanerProperties props = new CleanerProperties();
 		// set some properties to non-default values
@@ -488,13 +593,16 @@ public class FiveSeconds implements PostArticle {
 				+ "']/tr[child::td/text()='Đề tài bình thường']/./following-sibling::tr/td//a[ string-length(@id) >13 and substring(@id,1,13) = 'thread_title_' and string-length(@href) >17 and substring(@href,1,17)='showthread.php?t=']/@href";
 
 		xpath = "//ol[@id='threads']/li//h3[@class='threadtitle']/a[ string-length(@id) >13 and substring(@id,1,13) = 'thread_title_']/@href";
+		
+		xpath = "//ol[@id='threads']/li//h3[@class='threadtitle']/a[ string-length(@id) >15 and substring(@id,1,15) = 'thread_gotonew_']/@href";
+		
 		List<?> list = document.selectNodes(xpath);
 		String url;
 		String t;
 
 		for (int i = 0; i < maxUpForOneTopic && i < list.size(); i++) {
 			Node element = (Node) list.get(i);
-<<<<<<< .mine			url = /* "http://www.5giay.vn/" + */element.getText();
+			url = /* "http://www.5giay.vn/" + */element.getText();
 			// url = "http://www.5giay.vn/" + element.getText();
 
 			int lastIndex = element.getText().lastIndexOf("/");
@@ -505,21 +613,10 @@ public class FiveSeconds implements PostArticle {
 			// t = element.getText().substring(lastIndex+1);
 			System.out.println("URL: " + url);
 			System.out.println("t: " + t);
-=======			url = /*"http://www.5giay.vn/" +*/ element.getText();
-			//TODO for older code
-			//url = "http://www.5giay.vn/" + element.getText();
-			System.out.println(url);
-			int lastIndex =  element.getText().lastIndexOf("/");
-			//TODO for older code
-			//int lastIndex =  element.getText().lastIndexOf("=");
-			
-			int nextIndex =  element.getText().indexOf("-",lastIndex); t = element.getText().substring(lastIndex+1,nextIndex);
-			//TODO for older code
-			//t = element.getText().substring(lastIndex+1);
->>>>>>> .theirs			httpGetStepOne = new HttpGet(url);
+			httpGetStepOne = new HttpGet(url);
 			setHeader(httpGetStepOne);
 			mustWait();
-			responseBody = httpclient.execute(httpGetStepOne, responseHandler);
+			responseBody = responseHandler.handleResponse(httpclient.execute(httpGetStepOne, context));
 			/**
 			 * message Up phá»¥ báº¡n, ráº£ng qua up phá»¥ mÃ¬nh vá»i nhÃ©<br/>
 			 * wysiwyg 1<br/>
@@ -567,21 +664,21 @@ public class FiveSeconds implements PostArticle {
 				setHeader(httpPost);
 				httpPost.setHeader("Referer",
 						"http://www.5giay.vn/showthread.php?t=" + t);
-				responseBody = httpclient.execute(httpPost, responseHandler);
-				if (responseHandler.isMustFollow()) {
+				responseBody = responseHandler.handleResponse(httpclient.execute(httpPost, context));
+				/*if (responseHandler.isMustFollow()) {
 					httpGetStepOne = new HttpGet(responseBody);
 					setHeader(httpGetStepOne);
-					responseBody = httpclient.execute(httpGetStepOne,
-							responseHandler);
-				}
-				mustWait();
+					responseBody =responseHandler.handleResponse(httpclient.execute(httpGetStepOne,
+							context));
+				}*/
+				mustWaitMax();
 			}
 		}
 
 	}
 
 	long maxMustWait = 10;
-	long sizeMustWait = 5;
+	long sizeMustWait = 15;
 
 	public synchronized void mustWait() throws InterruptedException {
 
@@ -591,18 +688,25 @@ public class FiveSeconds implements PostArticle {
 		wait(real * 1000);
 	}
 
+	public synchronized void mustWaitMax() throws InterruptedException {
+
+		long max = 120;
+		long size = 60;
+		long real = Math.round(max + size * Math.random());
+		wait(real * 1000);
+	}
 	public void up() throws Exception {
 		for (int i = 0; i < listTopic.length; i++) {
 			selectThread("http://www.5giay.vn/forumdisplay.php?f="
 					+ listTopic[i], listTopic[i], "100080155",
-					"Up phụ bạn, rảnh qua up phụ mình link bên dưới nhé!<br/>");
+					"Up phụ bạn, rảnh qua up phụ mình nhé!<br/>");
 			mustWait();
 		}
 	}
 
 	public static void main(String[] args) throws Exception {
 
-		FiveSeconds article = new FiveSeconds();
+		FiveSeconds2 article = new FiveSeconds2();
 		article.login("myname74119", null, true, new Object[] {
 				"25f9e794323b453885f5181f1b624d0b",
 				"25f9e794323b453885f5181f1b624d0b" });

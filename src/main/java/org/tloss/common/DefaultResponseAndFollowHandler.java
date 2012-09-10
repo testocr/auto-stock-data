@@ -35,11 +35,17 @@ public class DefaultResponseAndFollowHandler implements ResponseHandler<String> 
 	public String handleResponse(final HttpResponse response)
 			throws HttpResponseException, IOException {
 		mustFollow = false;
-		HttpEntity entity = response.getEntity();
+		
 		Header[] headers = response.getHeaders("Location");
 		if (headers != null && headers.length > 0) {
 			mustFollow = true;
 			return headers[0].getValue();
+		}
+		HttpEntity entity = response.getEntity();
+		headers  = response.getAllHeaders();
+		System.out.println("==============================================");
+		for(int i=0;i<headers.length;i++){
+			System.out.println(headers[i]);
 		}
 		if (entity.getContentEncoding() != null
 				&& "deflate".equals(entity.getContentEncoding().getValue())) {
