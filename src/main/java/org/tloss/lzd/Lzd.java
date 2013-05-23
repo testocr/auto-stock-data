@@ -297,7 +297,7 @@ public class Lzd {
 		return result;
 	}
 
-	public void addToCart(String url, String vc)
+	public void addToCart(String url, String vc,String p,String sku)
 			throws ClientProtocolException, IOException, DocumentException {
 		CleanerProperties props = new CleanerProperties();
 		// set some properties to non-default values
@@ -327,7 +327,7 @@ public class Lzd {
 				YII_CSRF_TOKEN = element.attributeValue("value");
 			}
 		}
-		String addCartUrl = "http://www.lazada.vn/ajax/cart/add/?return=json&p=NO793EL28IBJANVN&sku=NO793EL28IBJANVN-60216&quantity=1&YII_CSRF_TOKEN="
+		String addCartUrl = "http://www.lazada.vn/ajax/cart/add/?return=json&p="+p+"&sku="+sku+"&quantity=1&YII_CSRF_TOKEN="
 				+ YII_CSRF_TOKEN;
 		httpGetStepOne = new HttpGet(addCartUrl);
 		setHeader(httpGetStepOne);
@@ -377,7 +377,7 @@ public class Lzd {
 			List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 			nvps.add(new BasicNameValuePair("YII_CSRF_TOKEN", YII_CSRF_TOKEN));
 			nvps.add(new BasicNameValuePair("cartUpdate", "1"));
-			nvps.add(new BasicNameValuePair("qty_NO793EL28IBJANVN-60216", "1"));
+			nvps.add(new BasicNameValuePair("qty_"+sku, "1"));
 			nvps.add(new BasicNameValuePair("couponcode",vc));
 
 			httpPost.setEntity(new UrlEncodedFormEntity(nvps));
@@ -427,10 +427,12 @@ public class Lzd {
 		Lzd lzd = new Lzd();
 		lzd.login("myname74119@gmail.com", "");
 
-		String vc = "1ESCA165.1";
-		String url = "http://www.lazada.vn/Nokia-Lumia-520-IPS-4-5MP-8GB-Den-58171.html";
-
-		lzd.addToCart(url, vc);
+		String vc = "1SALES01ExQT72ct";
+		String url = "http://www.lazada.vn/Nokia-Lumia-710-LCD-37-5MP-8GB-Trang-28284.html";
+		String p = "NO793EL15PVWANVN";
+		String sku ="NO793EL15PVWANVN-28290";
+		
+		lzd.addToCart(url, vc,p,sku);
 
 	}
 }
