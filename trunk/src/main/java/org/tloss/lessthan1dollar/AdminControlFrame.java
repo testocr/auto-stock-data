@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.swing.JFileChooser;
@@ -121,7 +122,8 @@ public class AdminControlFrame extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				final JFileChooser fc = new JFileChooser();
 				int returnVal = fc.showOpenDialog(AdminControlFrame.this);
-
+				SimpleDateFormat dateFormat = new SimpleDateFormat(
+						"yyyy-MM-dd HH:mm:ss");
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 					File file = fc.getSelectedFile();
 					try {
@@ -139,19 +141,25 @@ public class AdminControlFrame extends JFrame {
 							newLine = br.readLine();
 							// Deal with the line
 							if (!first) {
-								transaction.setTrace(line.replace("\"", ""));
-								transaction.setTime(new Date());
+								String tmp[] = line.split("\\t");
+
+								transaction.setTrace(tmp[0].replace("\"", ""));
+								transaction.setTime(dateFormat.parse(tmp[1]
+										.replace("\"", "")));
+
 								if (newLine == null)
 									dollar.importData(host, transaction
 											.getTrace(), String
 											.valueOf(transaction.getTime()
-													.getTime()), "1");
+													.getTime()/1000), "1");
 								else
 									dollar.importData(host, transaction
 											.getTrace(), String
 											.valueOf(transaction.getTime()
-													.getTime()), "0");
-								System.out.println(line);
+													.getTime()/1000), "0");
+								System.out.println(String
+										.valueOf(transaction.getTime()
+												.getTime()/1000));
 							} else {
 								first = false;
 							}
