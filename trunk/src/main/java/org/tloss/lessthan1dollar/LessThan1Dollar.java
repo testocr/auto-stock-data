@@ -140,7 +140,8 @@ public class LessThan1Dollar {
 		return parse(host, responseBody);
 	}
 
-	public boolean importData(String host) throws Exception {
+	public boolean importData(String host, String trace, String date,String last)
+			throws Exception {
 		// /?q=last_buyer/settings/import/trace
 		HttpGet httpGetStepOne = null;
 
@@ -178,24 +179,25 @@ public class LessThan1Dollar {
 		for (Object object : list) {
 			Element element = (Element) object;
 			if (element.attribute("value") != null) {
-				if(!"trace_id".equals(element.attributeValue("name"))&&!"date".equals(element.attributeValue("name")))
-				nvps.add(new BasicNameValuePair(element.attributeValue("name"),
-						element.attributeValue("value")));
+				if (!"trace_id".equals(element.attributeValue("name"))
+						&& !"date".equals(element.attributeValue("name")))
+					nvps.add(new BasicNameValuePair(element
+							.attributeValue("name"), element
+							.attributeValue("value")));
 			}
 		}
-		
-		
+
 		nvps.add(new BasicNameValuePair("method", "0"));
-		nvps.add(new BasicNameValuePair("last", "0"));
-		
-		
-		HttpPost httpPost = new HttpPost(host + "/?q=last_buyer/settings/import/trace");
-		nvps.add(new BasicNameValuePair("trace_id", "141F6D275C2545"));
-		nvps.add(new BasicNameValuePair("date", "0"));
+		nvps.add(new BasicNameValuePair("last", last));
+
+		HttpPost httpPost = new HttpPost(host
+				+ "/?q=last_buyer/settings/import/trace");
+		nvps.add(new BasicNameValuePair("trace_id", trace));
+		nvps.add(new BasicNameValuePair("date", date));
 		httpPost.setEntity(new UrlEncodedFormEntity(nvps));
 		setHeader(httpPost);
 		responseBody = httpclient.execute(httpPost, responseHandler);
-		
+
 		return true;
 	}
 
@@ -243,7 +245,7 @@ public class LessThan1Dollar {
 	}
 
 	public static void main(String[] args) throws Exception {
-		final String host = "http://localhost/drupal-6.28";
+		final String host = "http://localhost/drupal6";
 		final AdminControlFrame frame = new AdminControlFrame("Amdin control",
 				host);
 		frame.setVisible(true);

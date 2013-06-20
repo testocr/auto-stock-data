@@ -3,7 +3,17 @@ package org.tloss.lessthan1dollar;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.util.Date;
 
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -56,7 +66,7 @@ public class AdminControlFrame extends JFrame {
 							AdminControlFrame.this.setTitle("Logined as "
 									+ loginDlg.getUsername());
 							initLoginedMenu();
-							dollar.importData(host);
+
 						}
 					} else {
 						AdminControlFrame.this.setTitle("Logined");
@@ -80,7 +90,7 @@ public class AdminControlFrame extends JFrame {
 			initLogoutMenu(menu);
 			mainMenu.revalidate();
 			menuBar.revalidate();
-			this.revalidate();
+			// this.revalidate();
 		}
 	}
 
@@ -90,7 +100,7 @@ public class AdminControlFrame extends JFrame {
 			mainMenu.remove(2);
 			mainMenu.revalidate();
 			menuBar.revalidate();
-			this.revalidate();
+			// this.revalidate();
 		}
 	}
 
@@ -102,6 +112,66 @@ public class AdminControlFrame extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				if (dollar.logout()) {
 					removeLoginedMenu();
+				}
+			}
+		});
+		menuItem = new JMenuItem("Import");
+		menu.add(menuItem);
+		menuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				final JFileChooser fc = new JFileChooser();
+				int returnVal = fc.showOpenDialog(AdminControlFrame.this);
+
+				if (returnVal == JFileChooser.APPROVE_OPTION) {
+					File file = fc.getSelectedFile();
+					try {
+						Transaction transaction = new Transaction();
+						InputStream fis;
+						BufferedReader br;
+						String line;
+						fis = new FileInputStream(file);
+						br = new BufferedReader(new InputStreamReader(fis,
+								Charset.forName("UTF-8")));
+						boolean first = true;
+						line = br.readLine();
+						String newLine;
+						while (line != null) {
+							newLine = br.readLine();
+							// Deal with the line
+							if (!first) {
+								transaction.setTrace(line.replace("\"", ""));
+								transaction.setTime(new Date());
+								if (newLine == null)
+									dollar.importData(host, transaction
+											.getTrace(), String
+											.valueOf(transaction.getTime()
+													.getTime()), "1");
+								else
+									dollar.importData(host, transaction
+											.getTrace(), String
+											.valueOf(transaction.getTime()
+													.getTime()), "0");
+								System.out.println(line);
+							} else {
+								first = false;
+							}
+							line = newLine;
+						}
+
+						// Done with the file
+						br.close();
+						br = null;
+						fis = null;
+					} catch (FileNotFoundException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 			}
 		});
