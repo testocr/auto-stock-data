@@ -1,15 +1,8 @@
 package org.tloss.lessthan1dollar;
 
-import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JMenuBar;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpVersion;
@@ -76,11 +69,14 @@ public class LessThan1Dollar {
 		httpclient.getParams().setParameter(ClientPNames.COOKIE_POLICY,
 				CookiePolicy.BROWSER_COMPATIBILITY);
 	}
+	protected boolean isLogined(String responseBody){
+		return responseBody.contains("logout\">Log out</a>");
+	}
 
 	protected LoginForm parse(String host, String responseBody)
 			throws Exception {
 		LoginForm form = new LoginForm();
-		form.setLogined(responseBody.contains("href=\"/logout\""));
+		form.setLogined(isLogined(responseBody));
 		responseBody = responseBody.replace("xml:lang", "lang");
 		Image image = null;
 		CleanerProperties props = new CleanerProperties();
@@ -158,7 +154,7 @@ public class LessThan1Dollar {
 
 		boolean result = false;
 		String responseBody = null;
-		HttpPost httpPost = new HttpPost(host + "/node?destination=node");
+		HttpPost httpPost = new HttpPost(host + "/?q=node&destination=node");
 		nvps.add(new BasicNameValuePair("name", username));
 		nvps.add(new BasicNameValuePair("pass", password));
 		if (captcha != null) {
@@ -173,7 +169,7 @@ public class LessThan1Dollar {
 			setHeader(httpGetStepOne);
 			responseBody = httpclient.execute(httpGetStepOne, responseHandler);
 
-			result = responseBody.contains("href=\"/logout\"");
+			result = isLogined(responseBody);
 			if (!result) {
 				loginResult.setForm(parse(host, responseBody));
 			}
@@ -184,7 +180,6 @@ public class LessThan1Dollar {
 
 	public static void main(String[] args) throws Exception {
 		final String host = "http://lessthan1dollar.org";
-		final LessThan1Dollar dollar = new LessThan1Dollar();
 		final AdminControlFrame frame = new AdminControlFrame("Amdin control",
 				host);
 		frame.setVisible(true);
