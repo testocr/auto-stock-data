@@ -69,15 +69,20 @@ public class LessThan1Dollar {
 		httpclient.getParams().setParameter(ClientPNames.COOKIE_POLICY,
 				CookiePolicy.BROWSER_COMPATIBILITY);
 	}
-	protected boolean isLogined(String responseBody){
+
+	protected boolean isLogined(String responseBody) {
 		return responseBody.contains("logout\">Log out</a>");
+	}
+
+	protected String clearInvaliedXml(String responseBody) {
+		return responseBody.replace("xml:lang", "lang");
 	}
 
 	protected LoginForm parse(String host, String responseBody)
 			throws Exception {
 		LoginForm form = new LoginForm();
 		form.setLogined(isLogined(responseBody));
-		responseBody = responseBody.replace("xml:lang", "lang");
+		responseBody = clearInvaliedXml(responseBody);
 		Image image = null;
 		CleanerProperties props = new CleanerProperties();
 		// set some properties to non-default values
@@ -135,6 +140,65 @@ public class LessThan1Dollar {
 		return parse(host, responseBody);
 	}
 
+	public boolean importData(String host) throws Exception {
+		// /?q=last_buyer/settings/import/trace
+		HttpGet httpGetStepOne = null;
+
+		httpGetStepOne = new HttpGet(host
+				+ "/?q=last_buyer/settings/import/trace");
+		setHeader(httpGetStepOne);
+		String responseBody = httpclient.execute(httpGetStepOne,
+				responseHandler);
+		if (!isLogined(responseBody)) {
+			return false;
+		}
+		responseBody = clearInvaliedXml(responseBody);
+		CleanerProperties props = new CleanerProperties();
+		// set some properties to non-default values
+		props.setTranslateSpecialEntities(true);
+		props.setTransResCharsToNCR(true);
+		props.setOmitComments(true);
+
+		TagNode tagNode = new HtmlCleaner(props).clean(new StringReader(
+				responseBody));
+		// serialize to xml file
+		String xml = new PrettyXmlSerializer(props).getAsString(tagNode,
+				"utf-8");
+		// System.out.println(xml);
+		SAXReader reader = new SAXReader();
+		reader.setFeature("http://xml.org/sax/features/namespaces", false);
+		reader.setFeature("http://xml.org/sax/features/namespace-prefixes",
+				false);
+
+		Document document = reader.read(new StringReader(xml));
+		List<?> list = document
+				.selectNodes("//form[@id='admin-import-trace-form']//input");
+		List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+
+		for (Object object : list) {
+			Element element = (Element) object;
+			if (element.attribute("value") != null) {
+				if(!"trace_id".equals(element.attributeValue("name"))&&!"date".equals(element.attributeValue("name")))
+				nvps.add(new BasicNameValuePair(element.attributeValue("name"),
+						element.attributeValue("value")));
+			}
+		}
+		
+		
+		nvps.add(new BasicNameValuePair("method", "0"));
+		nvps.add(new BasicNameValuePair("last", "0"));
+		
+		
+		HttpPost httpPost = new HttpPost(host + "/?q=last_buyer/settings/import/trace");
+		nvps.add(new BasicNameValuePair("trace_id", "141F6D275C2545"));
+		nvps.add(new BasicNameValuePair("date", "0"));
+		httpPost.setEntity(new UrlEncodedFormEntity(nvps));
+		setHeader(httpPost);
+		responseBody = httpclient.execute(httpPost, responseHandler);
+		
+		return true;
+	}
+
 	public boolean logout() {
 		return true;
 	}
@@ -179,7 +243,7 @@ public class LessThan1Dollar {
 	}
 
 	public static void main(String[] args) throws Exception {
-		final String host = "http://lessthan1dollar.org";
+		final String host = "http://localhost/drupal-6.28";
 		final AdminControlFrame frame = new AdminControlFrame("Amdin control",
 				host);
 		frame.setVisible(true);
