@@ -105,6 +105,22 @@ public class AdminControlFrame extends JFrame {
 		});
 	}
 
+	protected void intOptionMenu() {
+		JMenuItem menuItem;
+		menuItem = new JMenuItem("Option");
+		menuItem.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent arg0) {
+				ConnectionOption connectionOption = new ConnectionOption(
+						AdminControlFrame.this);
+				connectionOption.setSize(400, 300);
+				connectionOption.setVisible(true);
+				dollar.setOption(connectionOption.getProxyOption());
+			}
+		});
+		menuBar.add(menuItem);
+	}
+
 	final JMenuBar menuBar;
 	final JMenu mainMenu;
 
@@ -114,7 +130,6 @@ public class AdminControlFrame extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setSize(600, 400);
 
-		JMenuItem menuItem;
 		menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
 		mainMenu = new JMenu("File");
@@ -122,5 +137,6 @@ public class AdminControlFrame extends JFrame {
 		menuBar.add(mainMenu);
 		initLoginMenu(mainMenu);
 		initExitMenu(mainMenu);
+		intOptionMenu();
 	}
 }

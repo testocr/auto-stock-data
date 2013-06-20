@@ -54,11 +54,18 @@ public class LessThan1Dollar {
 		// http.setHeader("Referer", "http://www.ddth.com/forum.php");
 	}
 
-	public void initHttpClient(HttpClient httpclient) {
+	ProxyOption option;
 
-		HttpHost proxy = new HttpHost("172.16.203.5", 8080);
-		httpclient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY,
-				proxy);
+	public void setOption(ProxyOption option) {
+		this.option = option;
+	}
+
+	public void initHttpClient(HttpClient httpclient) {
+		if (option != null && option.isUserProxy()) {
+			HttpHost proxy = new HttpHost(option.getProxy(), option.getPort());
+			httpclient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY,
+					proxy);
+		}
 		httpclient.getParams().setParameter(
 				CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1); // Default
 																			// to
@@ -131,10 +138,11 @@ public class LessThan1Dollar {
 
 		return parse(host, responseBody);
 	}
-    public boolean logout(){
-    	return true;
-    }
-	
+
+	public boolean logout() {
+		return true;
+	}
+
 	public LoginResult login(String username, String password,
 			boolean encrytedPassword, String captcha, String host,
 			List<NameValuePair> nvps) throws Exception {
@@ -175,7 +183,6 @@ public class LessThan1Dollar {
 	}
 
 	public static void main(String[] args) throws Exception {
-
 		final String host = "http://lessthan1dollar.org";
 		final LessThan1Dollar dollar = new LessThan1Dollar();
 		final AdminControlFrame frame = new AdminControlFrame("Amdin control",
