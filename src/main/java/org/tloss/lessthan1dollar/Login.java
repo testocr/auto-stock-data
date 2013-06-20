@@ -62,11 +62,13 @@ public class Login extends JDialog {
 		panel.add(text1);
 		panel.add(label2);
 		panel.add(text2);
-		ImageIcon image = new ImageIcon(imagedata);
-		label3 = new JLabel(" ", image, JLabel.CENTER);
-		panel.add(label3);
-		text3 = new JTextField(15);
-		panel.add(text3);
+		if (imagedata != null) {
+			ImageIcon image = new ImageIcon(imagedata);
+			label3 = new JLabel(" ", image, JLabel.CENTER);
+			panel.add(label3);
+			text3 = new JTextField(15);
+			panel.add(text3);
+		}
 		panel.add(SUBMIT);
 		panel.add(reloadForm);
 		SUBMIT.addActionListener(new ActionListener() {
@@ -75,10 +77,10 @@ public class Login extends JDialog {
 				LoginResult loginResult = null;
 				try {
 					username = text1.getText();
+					String captcha = text3 != null ? text3.getText() : null;
 					loginResult = Login.this.dollar.login(text1.getText(),
-							new String(text2.getPassword()), false,
-							text3.getText(), Login.this.host,
-							Login.this.form.getInput());
+							new String(text2.getPassword()), false, captcha,
+							Login.this.host, Login.this.form.getInput());
 					successs = loginResult.isResult();
 					if (successs)
 						dispose();
@@ -111,7 +113,8 @@ public class Login extends JDialog {
 				try {
 					Login.this.form = Login.this.dollar
 							.proLogin(Login.this.host);
-					if (Login.this.form != null) {
+					if (Login.this.form != null
+							&& Login.this.form.getCaptcha() != null) {
 						ImageIcon image = new ImageIcon(Login.this.form
 								.getCaptcha().getData());
 						label3.setIcon(image);

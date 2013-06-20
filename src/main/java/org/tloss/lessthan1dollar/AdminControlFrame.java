@@ -43,18 +43,19 @@ public class AdminControlFrame extends JFrame {
 				try {
 					loginForm = dollar.proLogin(AdminControlFrame.this.host);
 					if (!loginForm.isLogined()) {
+						byte[] imageData = null;
 						if (loginForm.getCaptcha() != null) {
-							Login loginDlg = new Login(AdminControlFrame.this,
-									loginForm.getCaptcha().getData(),
-									loginForm, dollar,
-									AdminControlFrame.this.host);
-							loginDlg.setSize(400, 300);
-							loginDlg.setVisible(true);
-							if (loginDlg.getLoginResult()) {
-								AdminControlFrame.this.setTitle("Logined as "
-										+ loginDlg.getUsername());
-								initLoginedMenu();
-							}
+							imageData = loginForm.getCaptcha().getData();
+						}
+						Login loginDlg = new Login(AdminControlFrame.this,
+								imageData, loginForm, dollar,
+								AdminControlFrame.this.host);
+						loginDlg.setSize(400, 300);
+						loginDlg.setVisible(true);
+						if (loginDlg.getLoginResult()) {
+							AdminControlFrame.this.setTitle("Logined as "
+									+ loginDlg.getUsername());
+							initLoginedMenu();
 						}
 					} else {
 						AdminControlFrame.this.setTitle("Logined");
