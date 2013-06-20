@@ -56,6 +56,7 @@ public class AdminControlFrame extends JFrame {
 							AdminControlFrame.this.setTitle("Logined as "
 									+ loginDlg.getUsername());
 							initLoginedMenu();
+							dollar.importData(host);
 						}
 					} else {
 						AdminControlFrame.this.setTitle("Logined");
