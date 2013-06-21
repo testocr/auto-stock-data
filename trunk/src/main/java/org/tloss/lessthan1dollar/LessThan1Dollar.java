@@ -140,7 +140,7 @@ public class LessThan1Dollar {
 		return parse(host, responseBody);
 	}
 
-	public boolean importData(String host, String trace, String date,String last)
+	public int importData(String host, String trace, String date, String last)
 			throws Exception {
 		// /?q=last_buyer/settings/import/trace
 		HttpGet httpGetStepOne = null;
@@ -151,7 +151,7 @@ public class LessThan1Dollar {
 		String responseBody = httpclient.execute(httpGetStepOne,
 				responseHandler);
 		if (!isLogined(responseBody)) {
-			return false;
+			return Constants.ERROR_MUST_LOGIN;
 		}
 		responseBody = clearInvaliedXml(responseBody);
 		CleanerProperties props = new CleanerProperties();
@@ -197,8 +197,10 @@ public class LessThan1Dollar {
 		httpPost.setEntity(new UrlEncodedFormEntity(nvps));
 		setHeader(httpPost);
 		responseBody = httpclient.execute(httpPost, responseHandler);
-
-		return true;
+		if ("SUCCESS".equals(responseBody))
+			return Constants.SUCCESS;
+		else
+			return Constants.ERROR_GENERAL;
 	}
 
 	public boolean logout() {
@@ -245,7 +247,7 @@ public class LessThan1Dollar {
 	}
 
 	public static void main(String[] args) throws Exception {
-		final String host = "http://localhost/drupal6";
+		final String host = "http://localhost/drupal-6.28/";
 		final AdminControlFrame frame = new AdminControlFrame("Amdin control",
 				host);
 		frame.setVisible(true);
