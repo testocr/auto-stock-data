@@ -3,16 +3,7 @@ package org.tloss.lessthan1dollar;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -122,59 +113,15 @@ public class AdminControlFrame extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				final JFileChooser fc = new JFileChooser();
 				int returnVal = fc.showOpenDialog(AdminControlFrame.this);
-				SimpleDateFormat dateFormat = new SimpleDateFormat(
-						"yyyy-MM-dd HH:mm:ss");
+
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 					File file = fc.getSelectedFile();
 					try {
-						Transaction transaction = new Transaction();
-						InputStream fis;
-						BufferedReader br;
-						String line;
-						fis = new FileInputStream(file);
-						br = new BufferedReader(new InputStreamReader(fis,
-								Charset.forName("UTF-8")));
-						boolean first = true;
-						line = br.readLine();
-						String newLine;
-						while (line != null) {
-							newLine = br.readLine();
-							// Deal with the line
-							if (!first) {
-								String tmp[] = line.split("\\t");
 
-								transaction.setTrace(tmp[0].replace("\"", ""));
-								transaction.setTime(dateFormat.parse(tmp[1]
-										.replace("\"", "")));
-
-								if (newLine == null)
-									dollar.importData(host, transaction
-											.getTrace(), String
-											.valueOf(transaction.getTime()
-													.getTime() / 1000), "1");
-								else
-									dollar.importData(host, transaction
-											.getTrace(), String
-											.valueOf(transaction.getTime()
-													.getTime() / 1000), "0");
-								System.out.println(String.valueOf(transaction
-										.getTime().getTime() / 1000));
-							} else {
-								first = false;
-							}
-							line = newLine;
-						}
-
-						// Done with the file
-						br.close();
-						br = null;
-						fis = null;
-					} catch (FileNotFoundException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						ImportProgressInfo info = new ImportProgressInfo(
+								AdminControlFrame.this, "Import", file, dollar,
+								host);
+						info.startShowProgress();
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
