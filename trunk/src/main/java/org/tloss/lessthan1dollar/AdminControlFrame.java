@@ -151,15 +151,14 @@ public class AdminControlFrame extends JFrame {
 									dollar.importData(host, transaction
 											.getTrace(), String
 											.valueOf(transaction.getTime()
-													.getTime()/1000), "1");
+													.getTime() / 1000), "1");
 								else
 									dollar.importData(host, transaction
 											.getTrace(), String
 											.valueOf(transaction.getTime()
-													.getTime()/1000), "0");
-								System.out.println(String
-										.valueOf(transaction.getTime()
-												.getTime()/1000));
+													.getTime() / 1000), "0");
+								System.out.println(String.valueOf(transaction
+										.getTime().getTime() / 1000));
 							} else {
 								first = false;
 							}
