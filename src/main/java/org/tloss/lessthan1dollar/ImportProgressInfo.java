@@ -77,7 +77,7 @@ public class ImportProgressInfo extends JDialog {
 			String line;
 			fis = new FileInputStream(dataFile);
 			br = new BufferedReader(new InputStreamReader(fis,
-					Charset.forName("UTF-8")));
+					Charset.forName("UTF-16LE")));
 			boolean first = true;
 			line = br.readLine();
 			String newLine;

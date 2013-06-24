@@ -15,6 +15,7 @@ import javax.swing.KeyStroke;
 public class AdminControlFrame extends JFrame {
 	final LessThan1Dollar dollar = new LessThan1Dollar();
 	String host;
+	String currentdir = null;
 
 	protected void initExitMenu(JMenu menu) {
 		// Exit menu
@@ -112,10 +113,16 @@ public class AdminControlFrame extends JFrame {
 		menuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				final JFileChooser fc = new JFileChooser();
+				if (currentdir != null) {
+					fc.setCurrentDirectory(new File(currentdir));
+				}else{
+					fc.setCurrentDirectory(new File("."));
+				}
 				int returnVal = fc.showOpenDialog(AdminControlFrame.this);
 
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 					File file = fc.getSelectedFile();
+					currentdir = file.getParent();
 					try {
 
 						ImportProgressInfo info = new ImportProgressInfo(
