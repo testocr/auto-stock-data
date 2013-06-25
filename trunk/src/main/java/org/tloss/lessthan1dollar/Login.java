@@ -28,7 +28,6 @@ public class Login extends JDialog {
 	JTextField text1, text3;
 	LessThan1Dollar dollar;
 	LoginForm form;
-	String host;
 	boolean successs = false;
 	String username;
 
@@ -41,11 +40,10 @@ public class Login extends JDialog {
 	}
 
 	Login(Frame frame, byte[] imagedata, LoginForm form,
-			LessThan1Dollar dollar, String host) {
+			LessThan1Dollar dollar) {
 		super(frame, "Login", true);
 		this.form = form;
 		this.dollar = dollar;
-		this.host = host;
 		label1 = new JLabel();
 		label1.setText("Username:");
 		text1 = new JTextField(15);
@@ -80,7 +78,7 @@ public class Login extends JDialog {
 					String captcha = text3 != null ? text3.getText() : null;
 					loginResult = Login.this.dollar.login(text1.getText(),
 							new String(text2.getPassword()), false, captcha,
-							Login.this.host, Login.this.form.getInput());
+							 Login.this.form.getInput());
 					successs = loginResult.isResult();
 					if (successs)
 						dispose();
@@ -112,7 +110,7 @@ public class Login extends JDialog {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
 					Login.this.form = Login.this.dollar
-							.proLogin(Login.this.host);
+							.proLogin();
 					if (Login.this.form != null
 							&& Login.this.form.getCaptcha() != null) {
 						ImageIcon image = new ImageIcon(Login.this.form

@@ -23,13 +23,11 @@ public class ImportProgressInfo extends JDialog {
 	int error = 0;
 	File dataFile;
 	LessThan1Dollar dollar;
-	String host;
-
+	
 	public ImportProgressInfo(JFrame frame, String title, File file,
-			LessThan1Dollar dollar, String host) {
+			LessThan1Dollar dollar) {
 		super(frame, title, true);
 		this.dollar = dollar;
-		this.host = host;
 		dataFile = file;
 		panel = new JPanel(new GridLayout(2, 2));
 		label1 = new JLabel();
@@ -90,7 +88,7 @@ public class ImportProgressInfo extends JDialog {
 					transaction.setTime(dateFormat.parse(tmp[1].replace("\"",
 							"")));
 					if (newLine == null) {
-						if (Constants.SUCCESS == dollar.importData(host,
+						if (Constants.SUCCESS == dollar.importData(
 								transaction.getTrace(), String
 										.valueOf(transaction.getTime()
 												.getTime() / 1000), "1")) {
@@ -100,7 +98,7 @@ public class ImportProgressInfo extends JDialog {
 						}
 
 					} else {
-						if (Constants.SUCCESS == dollar.importData(host,
+						if (Constants.SUCCESS == dollar.importData(
 								transaction.getTrace(), String
 										.valueOf(transaction.getTime()
 												.getTime() / 1000), "0")) {

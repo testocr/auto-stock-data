@@ -4,6 +4,17 @@ public class ProxyOption {
 	boolean userProxy = false;
 	String proxy;
 	int port;
+	String host;
+	
+	
+
+	public String getHost() {
+		return host;
+	}
+
+	public void setHost(String host) {
+		this.host = host;
+	}
 
 	public boolean isUserProxy() {
 		return userProxy;
