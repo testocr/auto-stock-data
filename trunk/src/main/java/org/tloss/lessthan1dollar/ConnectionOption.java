@@ -19,7 +19,7 @@ public class ConnectionOption extends JDialog {
 	JTextField text1, text2;
 
 	public ConnectionOption(JFrame frame) {
-		super(frame);
+		super(frame, "Option FORM", true);
 		JPanel panel;
 		JLabel label1, label2, label3;
 

@@ -170,7 +170,7 @@ public class FiveSeconds implements PostArticle {
 	 * posthash <br/>
 	 * poststarttime<br/>
 	 * loggedinuser 195249<br/>
-	 * sbutton Gởi Ðề Tài Mới<br/>
+	 * sbutton Gá»Ÿi Ã�á»� TÃ i Má»›i<br/>
 	 * parseurl 1<br/>
 	 * emailupdate 9999<br/>
 	 * polloptions 4<br/>
@@ -308,7 +308,7 @@ public class FiveSeconds implements PostArticle {
 		nvps.add(new BasicNameValuePair("posthash", posthash));
 		nvps.add(new BasicNameValuePair("poststarttime", poststarttime));
 		nvps.add(new BasicNameValuePair("loggedinuser", loggedinuser));
-		nvps.add(new BasicNameValuePair("sbutton", "Gửi Chủ đề"));
+		nvps.add(new BasicNameValuePair("sbutton", "Gá»­i Chá»§ Ä‘á»�"));
 		nvps.add(new BasicNameValuePair("parseurl", "1"));
 		nvps.add(new BasicNameValuePair("emailupdate", "9999"));
 		nvps.add(new BasicNameValuePair("polloptions", "4"));
@@ -386,7 +386,7 @@ public class FiveSeconds implements PostArticle {
 		responseBody = httpclient.execute(httpPost, responseHandler);
 
 		if (responseBody != null
-				&& responseBody.indexOf("Cám ơn bạn đã đăng nhập") > 0) {
+				&& responseBody.indexOf("CÃ¡m Æ¡n báº¡n Ä‘Ã£ Ä‘Äƒng nháº­p") > 0) {
 
 			//
 			tagNode = new HtmlCleaner(props).clean(new StringReader(
@@ -485,7 +485,7 @@ public class FiveSeconds implements PostArticle {
 		// name="wysiwyg">
 		String xpath = "//tbody[@id='threadbits_forum_"
 				+ topicID
-				+ "']/tr[child::td/text()='Đề tài bình thường']/./following-sibling::tr/td//a[ string-length(@id) >13 and substring(@id,1,13) = 'thread_title_' and string-length(@href) >17 and substring(@href,1,17)='showthread.php?t=']/@href";
+				+ "']/tr[child::td/text()='Ä�á»� tÃ i bÃ¬nh thÆ°á»�ng']/./following-sibling::tr/td//a[ string-length(@id) >13 and substring(@id,1,13) = 'thread_title_' and string-length(@href) >17 and substring(@href,1,17)='showthread.php?t=']/@href";
 
 		xpath = "//ol[@id='threads']/li//h3[@class='threadtitle']/a[ string-length(@id) >13 and substring(@id,1,13) = 'thread_title_']/@href";
 		List<?> list = document.selectNodes(xpath);
@@ -494,7 +494,7 @@ public class FiveSeconds implements PostArticle {
 
 		for (int i = 0; i < maxUpForOneTopic && i < list.size(); i++) {
 			Node element = (Node) list.get(i);
-<<<<<<< .mine			url = /* "http://www.5giay.vn/" + */element.getText();
+			url = /* "http://www.5giay.vn/" + */element.getText();
 			// url = "http://www.5giay.vn/" + element.getText();
 
 			int lastIndex = element.getText().lastIndexOf("/");
@@ -505,23 +505,12 @@ public class FiveSeconds implements PostArticle {
 			// t = element.getText().substring(lastIndex+1);
 			System.out.println("URL: " + url);
 			System.out.println("t: " + t);
-=======			url = /*"http://www.5giay.vn/" +*/ element.getText();
-			//TODO for older code
-			//url = "http://www.5giay.vn/" + element.getText();
-			System.out.println(url);
-			int lastIndex =  element.getText().lastIndexOf("/");
-			//TODO for older code
-			//int lastIndex =  element.getText().lastIndexOf("=");
-			
-			int nextIndex =  element.getText().indexOf("-",lastIndex); t = element.getText().substring(lastIndex+1,nextIndex);
-			//TODO for older code
-			//t = element.getText().substring(lastIndex+1);
->>>>>>> .theirs			httpGetStepOne = new HttpGet(url);
+
 			setHeader(httpGetStepOne);
 			mustWait();
 			responseBody = httpclient.execute(httpGetStepOne, responseHandler);
 			/**
-			 * message Up phá»¥ báº¡n, ráº£ng qua up phá»¥ mÃ¬nh vá»i nhÃ©<br/>
+			 * message Up phÃ¡Â»Â¥ bÃ¡ÂºÂ¡n, rÃ¡ÂºÂ£ng qua up phÃ¡Â»Â¥ mÃƒÂ¬nh vÃ¡Â»Â›i nhÃƒÂ©<br/>
 			 * wysiwyg 1<br/>
 			 * styleid 0<br/>
 			 * signature 1<br/>
@@ -533,7 +522,7 @@ public class FiveSeconds implements PostArticle {
 			 * p who cares<br/>
 			 * parseurl 1<br/>
 			 * loggedinuser 100080155<br/>
-			 * sbutton Gá»i Tráº£ Lá»i<br/>
+			 * sbutton GÃ¡Â»ÂŸi TrÃ¡ÂºÂ£ LÃ¡Â»Â�i<br/>
 			 */
 			tagNode = cleaner.clean(new StringReader(responseBody));
 			xml = serializer.getAsString(tagNode, "utf-8");
@@ -562,7 +551,7 @@ public class FiveSeconds implements PostArticle {
 				nvps.add(new BasicNameValuePair("p", "who cares"));
 				nvps.add(new BasicNameValuePair("parseurl", "1"));
 				nvps.add(new BasicNameValuePair("loggedinuser", loginID));
-				nvps.add(new BasicNameValuePair("sbutton", "Gởi Trả Lời"));
+				nvps.add(new BasicNameValuePair("sbutton", "Gá»ŸÂŸi Tráº£ Lá»�Â�i"));
 				httpPost.setEntity(new UrlEncodedFormEntity(nvps, HTTP.UTF_8));
 				setHeader(httpPost);
 				httpPost.setHeader("Referer",
@@ -595,7 +584,7 @@ public class FiveSeconds implements PostArticle {
 		for (int i = 0; i < listTopic.length; i++) {
 			selectThread("http://www.5giay.vn/forumdisplay.php?f="
 					+ listTopic[i], listTopic[i], "100080155",
-					"Up phụ bạn, rảnh qua up phụ mình link bên dưới nhé!<br/>");
+					"Up phá»¥ báº¡n, ráº£nh qua up phá»¥ mÃ¬nh link bÃªn dÆ°á»›i nhÃ©!<br/>");
 			mustWait();
 		}
 	}
@@ -608,11 +597,11 @@ public class FiveSeconds implements PostArticle {
 				"25f9e794323b453885f5181f1b624d0b" });
 		article.up();
 
-		// 57 -WINDOWS 7 :: PHẦN MỀM -GAME
+		// 57 -WINDOWS 7 :: PHáº¦N Má»€M -GAME
 		// XHTTGetArticle getArticle = new XHTTGetArticle();
 		// Article article2 =
 		// getArticle.get("http://xahoithongtin.com.vn/2011061508031456p0c252/filerfrog-thanh-phan-mo-rong-tuyet-voi-cho-windows-explorer.htm");
-		// article2.setContent(article2.getContent()+"Nguồn XHTT ");
+		// article2.setContent(article2.getContent()+"Nguá»“n XHTT ");
 		// article.post(article2, article.getUrl(PostArticle.POST_FORM_URL, new
 		// Object[]{"57"}),
 		// article.getUrl(PostArticle.POST_URL, new Object[]{"57"}), null);

@@ -2,7 +2,11 @@ package org.tloss.lessthan1dollar;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Vector;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpVersion;
@@ -25,6 +29,9 @@ import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.PrettyXmlSerializer;
 import org.htmlcleaner.TagNode;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 import org.tloss.common.DefaultResponseAndFollowHandler;
 import org.tloss.common.Image;
 import org.tloss.common.utils.Utils;
@@ -205,6 +212,60 @@ public class LessThan1Dollar {
 
 	public boolean logout() {
 		return true;
+	}
+
+	public String getPointByUserAndProduct(String host, String nid, String uid)
+			throws Exception {
+		HttpGet httpGetStepOne = null;
+
+		httpGetStepOne = new HttpGet(host
+				+ "/?q=last_buyer/settings/get/point/" + nid + "/" + uid);
+		setHeader(httpGetStepOne);
+		String responseBody = httpclient.execute(httpGetStepOne,
+				responseHandler);
+		return responseBody;
+	}
+
+	public Vector selectTopTransaction(String host, String nid)
+			throws Exception {
+		Vector list = new Vector();
+		HttpGet httpGetStepOne = null;
+
+		httpGetStepOne = new HttpGet(host
+				+ "/?q=last_buyer/settings/select/top/" + nid);
+		setHeader(httpGetStepOne);
+		String responseBody = httpclient.execute(httpGetStepOne,
+				responseHandler);
+
+		JSONArray jsonObject = (JSONArray) JSONValue.parse(responseBody);
+		if (jsonObject != null && jsonObject.size() > 0) {
+			for (int i = 0; i < jsonObject.size(); i++) {
+				JSONObject jsonObject2 = (JSONObject) jsonObject.get(i);
+				Vector vector = new Vector();
+				vector.add(jsonObject2.get("tid"));
+				vector.add(jsonObject2.get("nid"));
+				vector.add(jsonObject2.get("uid"));
+				vector.add(i);
+				vector.add(jsonObject2.get("buy_date"));
+				vector.add(jsonObject2.get("trace_id"));
+				vector.add(jsonObject2.get("ref_date"));
+				vector.add(getPointByUserAndProduct(host, nid,
+						jsonObject2.get("uid").toString()));
+				list.add(vector);
+			}
+		}
+		Collections.sort(list, new Comparator() {
+			public int compare(Object o1, Object o2) {
+				Vector v1 = (Vector) o1;
+				Vector v2 = (Vector) o2;
+				Integer idx1 = (Integer) v1.get(3);
+				Integer idx2 = (Integer) v2.get(3);
+				Integer point1 = Integer.parseInt(v1.get(7).toString().trim());
+				Integer point2 = Integer.parseInt(v2.get(7).toString().trim());
+				return (idx1 - point1) - (idx2 - point2);
+			}
+		});
+		return list;
 	}
 
 	public LoginResult login(String username, String password,
