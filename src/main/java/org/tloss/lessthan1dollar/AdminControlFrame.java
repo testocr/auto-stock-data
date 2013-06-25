@@ -10,6 +10,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 
 public class AdminControlFrame extends JFrame {
@@ -115,7 +116,7 @@ public class AdminControlFrame extends JFrame {
 				final JFileChooser fc = new JFileChooser();
 				if (currentdir != null) {
 					fc.setCurrentDirectory(new File(currentdir));
-				}else{
+				} else {
 					fc.setCurrentDirectory(new File("."));
 				}
 				int returnVal = fc.showOpenDialog(AdminControlFrame.this);
@@ -133,6 +134,24 @@ public class AdminControlFrame extends JFrame {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+				}
+			}
+		});
+		menuItem = new JMenuItem("Index");
+		menu.add(menuItem);
+		menuItem.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent arg0) {
+				String nid = (String) JOptionPane.showInputDialog(
+						AdminControlFrame.this, "NID", "Customized Dialog",
+						JOptionPane.PLAIN_MESSAGE, null, null, "1");
+				try {
+					RerangeIIndexDialog dialog = new RerangeIIndexDialog("index", AdminControlFrame.this, dollar, host, nid);
+					dialog.setSize(600,200);
+					dialog.setVisible(true);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 			}
 		});
