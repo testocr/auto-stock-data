@@ -15,7 +15,6 @@ import javax.swing.KeyStroke;
 
 public class AdminControlFrame extends JFrame {
 	final LessThan1Dollar dollar = new LessThan1Dollar();
-	String host;
 	String currentdir = null;
 
 	protected void initExitMenu(JMenu menu) {
@@ -45,15 +44,14 @@ public class AdminControlFrame extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				LoginForm loginForm;
 				try {
-					loginForm = dollar.proLogin(AdminControlFrame.this.host);
+					loginForm = dollar.proLogin();
 					if (!loginForm.isLogined()) {
 						byte[] imageData = null;
 						if (loginForm.getCaptcha() != null) {
 							imageData = loginForm.getCaptcha().getData();
 						}
 						Login loginDlg = new Login(AdminControlFrame.this,
-								imageData, loginForm, dollar,
-								AdminControlFrame.this.host);
+								imageData, loginForm, dollar);
 						loginDlg.setSize(400, 300);
 						loginDlg.setVisible(true);
 						if (loginDlg.getLoginResult()) {
@@ -127,8 +125,7 @@ public class AdminControlFrame extends JFrame {
 					try {
 
 						ImportProgressInfo info = new ImportProgressInfo(
-								AdminControlFrame.this, "Import", file, dollar,
-								host);
+								AdminControlFrame.this, "Import", file, dollar);
 						info.startShowProgress();
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
@@ -146,8 +143,9 @@ public class AdminControlFrame extends JFrame {
 						AdminControlFrame.this, "NID", "Customized Dialog",
 						JOptionPane.PLAIN_MESSAGE, null, null, "1");
 				try {
-					RerangeIIndexDialog dialog = new RerangeIIndexDialog("index", AdminControlFrame.this, dollar, host, nid);
-					dialog.setSize(600,200);
+					RerangeIIndexDialog dialog = new RerangeIIndexDialog(
+							"index", AdminControlFrame.this, dollar, nid);
+					dialog.setSize(600, 200);
 					dialog.setVisible(true);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
@@ -168,6 +166,7 @@ public class AdminControlFrame extends JFrame {
 				connectionOption.setSize(400, 300);
 				connectionOption.setVisible(true);
 				dollar.setOption(connectionOption.getProxyOption());
+				dollar.setHost(connectionOption.getProxyOption().getHost());
 			}
 		});
 		menuBar.add(menuItem);
@@ -178,10 +177,9 @@ public class AdminControlFrame extends JFrame {
 
 	public AdminControlFrame(String title, String host) {
 		super(title);
-		this.host = host;
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setSize(600, 400);
-
+		dollar.setHost(host);
 		menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
 		mainMenu = new JMenu("File");

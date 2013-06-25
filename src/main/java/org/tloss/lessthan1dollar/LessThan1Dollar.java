@@ -55,6 +55,11 @@ public class LessThan1Dollar {
 	}
 
 	ProxyOption option;
+	String host;
+
+	public void setHost(String host) {
+		this.host = host;
+	}
 
 	public void setOption(ProxyOption option) {
 		this.option = option;
@@ -85,8 +90,7 @@ public class LessThan1Dollar {
 		return responseBody.replace("xml:lang", "lang");
 	}
 
-	protected LoginForm parse(String host, String responseBody)
-			throws Exception {
+	protected LoginForm parse(String responseBody) throws Exception {
 		LoginForm form = new LoginForm();
 		form.setLogined(isLogined(responseBody));
 		responseBody = clearInvaliedXml(responseBody);
@@ -134,7 +138,7 @@ public class LessThan1Dollar {
 		return form;
 	}
 
-	public LoginForm proLogin(String host) throws Exception {
+	public LoginForm proLogin() throws Exception {
 
 		initHttpClient(httpclient);
 		HttpGet httpGetStepOne = null;
@@ -144,10 +148,10 @@ public class LessThan1Dollar {
 		String responseBody = httpclient.execute(httpGetStepOne,
 				responseHandler);
 
-		return parse(host, responseBody);
+		return parse(responseBody);
 	}
 
-	public int importData(String host, String trace, String date, String last)
+	public int importData(String trace, String date, String last)
 			throws Exception {
 		// /?q=last_buyer/settings/import/trace
 		HttpGet httpGetStepOne = null;
@@ -180,7 +184,7 @@ public class LessThan1Dollar {
 
 		Document document = reader.read(new StringReader(xml));
 		List<?> list = document
-				.selectNodes("//form[@id='admin-import-trace-form']//input");
+				.selectNodes("//form[@id='-api-admin-import-trace-form']//input");
 		List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 
 		for (Object object : list) {
@@ -204,6 +208,82 @@ public class LessThan1Dollar {
 		httpPost.setEntity(new UrlEncodedFormEntity(nvps));
 		setHeader(httpPost);
 		responseBody = httpclient.execute(httpPost, responseHandler);
+		System.out.println(responseBody);
+		if ("SUCCESS".equals(responseBody))
+			return Constants.SUCCESS;
+		else
+			return Constants.ERROR_GENERAL;
+	}
+
+	public int updateIndex(String uid, String nid, String idx, String point,
+			String ref_date, String rank, String buy_date, String section)
+			throws Exception {
+		// /?q=last_buyer/settings/import/trace
+		HttpGet httpGetStepOne = null;
+
+		httpGetStepOne = new HttpGet(host + "/?q=last_buyer/settings/index");
+		setHeader(httpGetStepOne);
+		String responseBody = httpclient.execute(httpGetStepOne,
+				responseHandler);
+		if (!isLogined(responseBody)) {
+			return Constants.ERROR_MUST_LOGIN;
+		}
+		responseBody = clearInvaliedXml(responseBody);
+		CleanerProperties props = new CleanerProperties();
+		// set some properties to non-default values
+		props.setTranslateSpecialEntities(true);
+		props.setTransResCharsToNCR(true);
+		props.setOmitComments(true);
+
+		TagNode tagNode = new HtmlCleaner(props).clean(new StringReader(
+				responseBody));
+		// serialize to xml file
+		String xml = new PrettyXmlSerializer(props).getAsString(tagNode,
+				"utf-8");
+		// System.out.println(xml);
+		SAXReader reader = new SAXReader();
+		reader.setFeature("http://xml.org/sax/features/namespaces", false);
+		reader.setFeature("http://xml.org/sax/features/namespace-prefixes",
+				false);
+
+		Document document = reader.read(new StringReader(xml));
+		List<?> list = document
+				.selectNodes("//form[@id='-api-update-index-form']//input");
+		List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+
+		for (Object object : list) {
+			Element element = (Element) object;
+			if (element.attribute("value") != null) {
+				if (!"uid".equals(element.attributeValue("name"))
+						&& !"nid".equals(element.attributeValue("name"))
+						&& !"idx".equals(element.attributeValue("name"))
+						&& !"point".equals(element.attributeValue("name"))
+						&& !"ref_date".equals(element.attributeValue("name"))
+						&& !"rank".equals(element.attributeValue("name"))
+						&& !"buy_date".equals(element.attributeValue("name")))
+					nvps.add(new BasicNameValuePair(element
+							.attributeValue("name"), element
+							.attributeValue("value")));
+			}
+		}
+
+		nvps.add(new BasicNameValuePair("method", "0"));
+		
+
+		HttpPost httpPost = new HttpPost(host
+				+"/?q=last_buyer/settings/index");
+		nvps.add(new BasicNameValuePair("uid", uid));
+		nvps.add(new BasicNameValuePair("nid", nid));
+		nvps.add(new BasicNameValuePair("idx", idx));
+		nvps.add(new BasicNameValuePair("point", point));
+		nvps.add(new BasicNameValuePair("ref_date", ref_date));
+		nvps.add(new BasicNameValuePair("rank", rank));
+		nvps.add(new BasicNameValuePair("buy_date", buy_date));
+		nvps.add(new BasicNameValuePair("section", section));
+		httpPost.setEntity(new UrlEncodedFormEntity(nvps));
+		setHeader(httpPost);
+		responseBody = httpclient.execute(httpPost, responseHandler);
+		System.out.println(responseBody);
 		if ("SUCCESS".equals(responseBody))
 			return Constants.SUCCESS;
 		else
@@ -214,7 +294,7 @@ public class LessThan1Dollar {
 		return true;
 	}
 
-	public String getPointByUserAndProduct(String host, String nid, String uid)
+	public String getPointByUserAndProduct(String nid, String uid)
 			throws Exception {
 		HttpGet httpGetStepOne = null;
 
@@ -226,8 +306,8 @@ public class LessThan1Dollar {
 		return responseBody;
 	}
 
-	public Vector selectTopTransaction(String host, String nid)
-			throws Exception {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public Vector selectTopTransaction(String nid) throws Exception {
 		Vector list = new Vector();
 		HttpGet httpGetStepOne = null;
 
@@ -241,6 +321,7 @@ public class LessThan1Dollar {
 		if (jsonObject != null && jsonObject.size() > 0) {
 			for (int i = 0; i < jsonObject.size(); i++) {
 				JSONObject jsonObject2 = (JSONObject) jsonObject.get(i);
+
 				Vector vector = new Vector();
 				vector.add(jsonObject2.get("tid"));
 				vector.add(jsonObject2.get("nid"));
@@ -249,8 +330,8 @@ public class LessThan1Dollar {
 				vector.add(jsonObject2.get("buy_date"));
 				vector.add(jsonObject2.get("trace_id"));
 				vector.add(jsonObject2.get("ref_date"));
-				vector.add(getPointByUserAndProduct(host, nid,
-						jsonObject2.get("uid").toString()));
+				vector.add(getPointByUserAndProduct(nid, jsonObject2.get("uid")
+						.toString()));
 				list.add(vector);
 			}
 		}
@@ -269,8 +350,8 @@ public class LessThan1Dollar {
 	}
 
 	public LoginResult login(String username, String password,
-			boolean encrytedPassword, String captcha, String host,
-			List<NameValuePair> nvps) throws Exception {
+			boolean encrytedPassword, String captcha, List<NameValuePair> nvps)
+			throws Exception {
 		LoginResult loginResult = new LoginResult();
 		// name admin
 		// pass
@@ -300,7 +381,7 @@ public class LessThan1Dollar {
 
 			result = isLogined(responseBody);
 			if (!result) {
-				loginResult.setForm(parse(host, responseBody));
+				loginResult.setForm(parse(responseBody));
 			}
 		}
 		loginResult.setResult(result);
