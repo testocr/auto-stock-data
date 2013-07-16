@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -23,7 +24,7 @@ public class ImportProgressInfo extends JDialog {
 	int error = 0;
 	File dataFile;
 	LessThan1Dollar dollar;
-	
+
 	public ImportProgressInfo(JFrame frame, String title, File file,
 			LessThan1Dollar dollar) {
 		super(frame, title, true);
@@ -70,6 +71,7 @@ public class ImportProgressInfo extends JDialog {
 			Transaction transaction = new Transaction();
 			SimpleDateFormat dateFormat = new SimpleDateFormat(
 					"yyyy-MM-dd HH:mm:ss");
+			Calendar calendar = Calendar.getInstance();
 			InputStream fis;
 			BufferedReader br;
 			String line;
@@ -87,11 +89,27 @@ public class ImportProgressInfo extends JDialog {
 					transaction.setTrace(tmp[0].replace("\"", ""));
 					transaction.setTime(dateFormat.parse(tmp[1].replace("\"",
 							"")));
+					if ("0AAFBA2762A623".equals(transaction.getTrace())) {
+						System.out.println(transaction.getTime());
+					}
+					StringBuffer dateString = new StringBuffer();
+					calendar.setTime(transaction.getTime());
+					dateString.append(calendar.get(Calendar.YEAR)).append(",");
+					dateString.append(calendar.get(Calendar.MONTH)+1).append(",");
+					dateString.append(calendar.get(Calendar.DAY_OF_MONTH))
+							.append(",");
+					dateString.append(calendar.get(Calendar.HOUR_OF_DAY))
+							.append(",");
+					dateString.append(calendar.get(Calendar.MINUTE))
+							.append(",");
+					dateString.append(calendar.get(Calendar.SECOND));
+					if(dateString.toString().equals("2012,5,7,18,56,3")){
+						System.out.println();
+					}
 					if (newLine == null) {
 						if (Constants.SUCCESS == dollar.importData(
-								transaction.getTrace(), String
-										.valueOf(transaction.getTime()
-												.getTime() / 1000), "1")) {
+								transaction.getTrace(), dateString.toString(),
+								"1")) {
 							updateSuccess(1);
 						} else {
 							updateError(1);
@@ -99,17 +117,15 @@ public class ImportProgressInfo extends JDialog {
 
 					} else {
 						if (Constants.SUCCESS == dollar.importData(
-								transaction.getTrace(), String
-										.valueOf(transaction.getTime()
-												.getTime() / 1000), "0")) {
+								transaction.getTrace(), dateString.toString(),
+								"0")) {
 							updateSuccess(1);
 						} else {
 							updateError(1);
 						}
 					}
 
-					System.out.println(String.valueOf(transaction.getTime()
-							.getTime() / 1000));
+					System.out.println(dateString.toString());
 				} else {
 					first = false;
 				}
