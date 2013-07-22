@@ -3,11 +3,14 @@ package org.tloss.lessthan1dollar;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
@@ -38,7 +41,15 @@ public class RerangeIIndexDialog extends JDialog {
 		button.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
-				String section = "0";
+				String[] sections = new String[] { "Mo", "Tu", "We", "Th", "Fr" };
+				Map<String, String> map = new HashMap<String, String>();
+				for (int i = 0; i < sections.length; i++) {
+					map.put(sections[i], String.valueOf(i + 2));
+				}
+				String section = (String) JOptionPane.showInputDialog(
+						RerangeIIndexDialog.this, "What Section?", "Sections",
+						JOptionPane.QUESTION_MESSAGE, null, sections,
+						sections[0]);
 				String uid, nid, idx, point, ref_date, rank, buy_date;
 
 				Vector vector;
@@ -52,14 +63,14 @@ public class RerangeIIndexDialog extends JDialog {
 					rank = String.valueOf(i);
 					buy_date = vector.get(4).toString();
 					try {
-						RerangeIIndexDialog.this.dollar.updateIndex(uid, nid, idx,
-								point, ref_date, rank, buy_date, section);
+						RerangeIIndexDialog.this.dollar.updateIndex(uid, nid,
+								idx, point, ref_date, rank, buy_date,map.get(section));
 					} catch (Exception e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
 				}
-
+				dispose();
 			}
 		});
 
