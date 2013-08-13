@@ -151,7 +151,7 @@ public class LessThan1Dollar {
 		return parse(responseBody);
 	}
 
-	public int importData(String trace, String date, String last)
+	public int importData(String trace, String date, String last, String section)
 			throws Exception {
 		// /?q=last_buyer/settings/import/trace
 		HttpGet httpGetStepOne = null;
@@ -200,6 +200,7 @@ public class LessThan1Dollar {
 
 		nvps.add(new BasicNameValuePair("method", "0"));
 		nvps.add(new BasicNameValuePair("last", last));
+		nvps.add(new BasicNameValuePair("section", section));
 
 		HttpPost httpPost = new HttpPost(host
 				+ "/?q=last_buyer/settings/import/trace");
