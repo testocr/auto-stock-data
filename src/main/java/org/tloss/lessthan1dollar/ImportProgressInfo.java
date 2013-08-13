@@ -10,10 +10,13 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 public class ImportProgressInfo extends JDialog {
@@ -24,7 +27,7 @@ public class ImportProgressInfo extends JDialog {
 	int error = 0;
 	File dataFile;
 	LessThan1Dollar dollar;
-
+	String section;
 	public ImportProgressInfo(JFrame frame, String title, File file,
 			LessThan1Dollar dollar) {
 		super(frame, title, true);
@@ -49,6 +52,16 @@ public class ImportProgressInfo extends JDialog {
 	}
 
 	public void startShowProgress() {
+		String[] sections = new String[] { "Mo", "Tu", "We", "Th", "Fr" };
+		Map<String, String> map = new HashMap<String, String>();
+		for (int i = 0; i < sections.length; i++) {
+			map.put(sections[i], String.valueOf(i + 2));
+		}
+		String section = (String) JOptionPane.showInputDialog(
+				ImportProgressInfo.this, "What Section?", "Sections",
+				JOptionPane.QUESTION_MESSAGE, null, sections,
+				sections[0]);
+		this.section =  section;
 		Runnable runnable = ImportProgressInfo.this.new InternalTask();
 		new Thread(runnable).start();
 		setVisible(true);
@@ -67,6 +80,7 @@ public class ImportProgressInfo extends JDialog {
 	}
 
 	class InternalTask implements Runnable {
+		
 		public void showProgress() throws Exception {
 			Transaction transaction = new Transaction();
 			SimpleDateFormat dateFormat = new SimpleDateFormat(
@@ -109,7 +123,7 @@ public class ImportProgressInfo extends JDialog {
 					if (newLine == null) {
 						if (Constants.SUCCESS == dollar.importData(
 								transaction.getTrace(), dateString.toString(),
-								"1")) {
+								"1",section)) {
 							updateSuccess(1);
 						} else {
 							updateError(1);
@@ -118,7 +132,7 @@ public class ImportProgressInfo extends JDialog {
 					} else {
 						if (Constants.SUCCESS == dollar.importData(
 								transaction.getTrace(), dateString.toString(),
-								"0")) {
+								"0",section)) {
 							updateSuccess(1);
 						} else {
 							updateError(1);
