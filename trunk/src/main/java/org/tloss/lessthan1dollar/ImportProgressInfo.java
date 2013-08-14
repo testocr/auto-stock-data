@@ -61,7 +61,7 @@ public class ImportProgressInfo extends JDialog {
 				ImportProgressInfo.this, "What Section?", "Sections",
 				JOptionPane.QUESTION_MESSAGE, null, sections,
 				sections[0]);
-		this.section =  section;
+		this.section =  map.get(section);
 		Runnable runnable = ImportProgressInfo.this.new InternalTask();
 		new Thread(runnable).start();
 		setVisible(true);
