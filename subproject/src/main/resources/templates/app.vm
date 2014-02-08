@@ -1,0 +1,34 @@
+$logger.info("Getting document .......")
+#set($doc =  $helper.executeGet("http://data.vietstock.vn/ket-qua-giao-dich/th_hsx.aspx"))
+$logger.info("Get document completed")
+#set($list =  $helper.selectNodes("//table[contains(@class,'list-stock')]",$doc))
+#foreach( $node in $list )
+#if($velocityCount==3)
+$logger.info("Parse  transaction at index 3")
+#set($t = $helper.selectNode("tbody/tr/td[@colspan='2']/text()",$node)) 
+=========================================================================
+|${t.nodeValue.trim()}											|
+=========================================================================
+#set($trList = $helper.selectNodes("tbody/tr[count(td)=2]",$node))
+#foreach( $tr in $trList )
+#set($td1 = $helper.selectNode("td[1]/text()",$tr))
+#set($td2 = $helper.selectNode("td[2]/text()",$tr))
+|			${td1.nodeValue.trim()}		|		 ${td2.nodeValue.trim()}			|
+=========================================================================
+#set( $val =  $td2.nodeValue.trim())
+#set ($val =  $val.replace(",",""))
+#set( $msg = "Insert to db ['${td1.nodeValue.trim()}','$td2.nodeValue.trim()']")
+$logger.info($msg)
+#set( $val =  $helper.getLong($val))
+#set( $rs = $helper.update($dataSource,"INSERT INTO top_stock(stock_code,val)  VALUES(?,?)",[],[$td1.nodeValue.trim(),$val]))
+#set($sdoc =  $helper.executeGet("http://finance.vietstock.vn/${td1.nodeValue.trim()}/tin-tuc-su-kien.htm"))
+#set( $price_close = $helper.selectNode("//p[@id='close']/span/text()",$sdoc))
+#set( $price_close = $price_close.nodeValue.trim())
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++ STOCK: ${td1.nodeValue.trim()}											+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++ Price Close:  ${price_close}												+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#end
+#end
+#end

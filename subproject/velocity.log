@@ -1,0 +1,40 @@
+2014-02-08 16:56:54,079 - Parser Exception: /templates/app.vm
+org.apache.velocity.runtime.parser.ParseException: Encountered "\t\t\t\t\t\t\t\t\t\t\t\t+\r\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\r\n+ Price Close:  " at line 28, column 32.
+Was expecting one of:
+    "[" ...
+    "}" ...
+    
+	at org.apache.velocity.runtime.parser.Parser.generateParseException(Parser.java:3679)
+	at org.apache.velocity.runtime.parser.Parser.jj_consume_token(Parser.java:3558)
+	at org.apache.velocity.runtime.parser.Parser.Reference(Parser.java:1521)
+	at org.apache.velocity.runtime.parser.Parser.Statement(Parser.java:357)
+	at org.apache.velocity.runtime.parser.Parser.Directive(Parser.java:918)
+	at org.apache.velocity.runtime.parser.Parser.Statement(Parser.java:379)
+	at org.apache.velocity.runtime.parser.Parser.IfStatement(Parser.java:1692)
+	at org.apache.velocity.runtime.parser.Parser.Statement(Parser.java:352)
+	at org.apache.velocity.runtime.parser.Parser.Directive(Parser.java:918)
+	at org.apache.velocity.runtime.parser.Parser.Statement(Parser.java:379)
+	at org.apache.velocity.runtime.parser.Parser.process(Parser.java:317)
+	at org.apache.velocity.runtime.parser.Parser.parse(Parser.java:117)
+	at org.apache.velocity.runtime.RuntimeInstance.parse(RuntimeInstance.java:1226)
+	at org.apache.velocity.runtime.RuntimeInstance.parse(RuntimeInstance.java:1181)
+	at org.apache.velocity.Template.process(Template.java:134)
+	at org.apache.velocity.runtime.resource.ResourceManagerImpl.loadResource(ResourceManagerImpl.java:437)
+	at org.apache.velocity.runtime.resource.ResourceManagerImpl.getResource(ResourceManagerImpl.java:352)
+	at org.apache.velocity.runtime.RuntimeInstance.getTemplate(RuntimeInstance.java:1533)
+	at org.apache.velocity.app.VelocityEngine.getTemplate(VelocityEngine.java:392)
+	at org.tloss.ws.Application.execute(Application.java:76)
+	at org.tloss.ws.Application.main(Application.java:87)
+2014-02-08 16:56:54,110 - ResourceManager.getResource() parse exception
+org.apache.velocity.exception.ParseErrorException: Encountered "\t\t\t\t\t\t\t\t\t\t\t\t+\r\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\r\n+ Price Close:  " at /templates/app.vm[line 28, column 32]
+Was expecting one of:
+    "[" ...
+    "}" ...
+    
+	at org.apache.velocity.Template.process(Template.java:151)
+	at org.apache.velocity.runtime.resource.ResourceManagerImpl.loadResource(ResourceManagerImpl.java:437)
+	at org.apache.velocity.runtime.resource.ResourceManagerImpl.getResource(ResourceManagerImpl.java:352)
+	at org.apache.velocity.runtime.RuntimeInstance.getTemplate(RuntimeInstance.java:1533)
+	at org.apache.velocity.app.VelocityEngine.getTemplate(VelocityEngine.java:392)
+	at org.tloss.ws.Application.execute(Application.java:76)
+	at org.tloss.ws.Application.main(Application.java:87)
