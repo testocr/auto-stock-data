@@ -26,6 +26,20 @@ public class Application {
 	private Logger logger = LoggerFactory.getLogger(Application.class);
 	DataSource dataSource;
 
+	public Properties initProxy() throws Exception {
+		Properties dbProps = new Properties();
+		try {
+			InputStream is = Application.class
+					.getResourceAsStream("/config.properties");
+			dbProps.load(is);
+			is.close();
+			return dbProps;
+		} catch (Exception e) {
+			throw new IOException("Could not read properties file");
+		}
+
+	}
+
 	public DataSource initDataSource() throws Exception {
 
 		Properties dbProps = new Properties();
@@ -62,7 +76,13 @@ public class Application {
 		ve.init();
 		vecontext = new VelocityContext();
 		WSHelper helper = new WSHelper();
-		helper.init();
+		Properties properties = initProxy();
+		helper.init(Boolean.valueOf(properties.getProperty("proxy.enable",
+				"false")), properties.getProperty("proxy.testURL",
+				"http://www.google.com.vn"), properties
+				.getProperty("proxy.user"), properties
+				.getProperty("proxy.password"), properties
+				.getProperty("proxy.domain"));
 		vecontext.put("helper", helper);
 		dataSource = initDataSource();
 		vecontext.put("dataSource", dataSource);

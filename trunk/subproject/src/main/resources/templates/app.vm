@@ -1,7 +1,11 @@
 $logger.info("Getting document .......")
-#set($doc =  $helper.executeGet("http://data.vietstock.vn/ket-qua-giao-dich/th_hsx.aspx"))
+#set($doc =  $helper.executeGet("http://data.vietstock.vn/ket-qua-giao-dich/th_hsx.aspx","DOM"))
 $logger.info("Get document completed")
 #set($list =  $helper.selectNodes("//table[contains(@class,'list-stock')]",$doc))
+#set($tran_date = $helper.selectNode("//input[@type='text' and contains(@class,'datepicker')]/@value",$doc))
+=========================================================================
+| tran_date :${tran_date.nodeValue.trim()}								|
+=========================================================================
 #foreach( $node in $list )
 #if($velocityCount==3)
 $logger.info("Parse  transaction at index 3")
@@ -20,15 +24,73 @@ $logger.info("Parse  transaction at index 3")
 #set( $msg = "Insert to db ['${td1.nodeValue.trim()}','$td2.nodeValue.trim()']")
 $logger.info($msg)
 #set( $val =  $helper.getLong($val))
-#set( $rs = $helper.update($dataSource,"INSERT INTO top_stock(stock_code,val)  VALUES(?,?)",[],[$td1.nodeValue.trim(),$val]))
-#set($sdoc =  $helper.executeGet("http://finance.vietstock.vn/${td1.nodeValue.trim()}/tin-tuc-su-kien.htm"))
-#set( $price_close = $helper.selectNode("//p[@id='close']/span/text()",$sdoc))
-#set( $price_close = $price_close.nodeValue.trim())
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-+ STOCK: ${td1.nodeValue.trim()}											+
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-+ Price Close:  ${price_close}												+
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#set( $rs = $helper.update($dataSource,"INSERT INTO top_stock(stock_code,val,tran_date)  VALUES(?,?,?)",[],[$td1.nodeValue.trim(),$val,$tran_date.nodeValue.trim()]))
+##get stock details
+#set($s =  $helper.executeGet("http://finance.vietstock.vn/AjaxData/TradingResult/GetStockData.ashx?scode=${td1.nodeValue.trim()}","JSON"))
+#set($stock = $s.get(0))
+#set($OpenPrice = $stock.get("OpenPrice"))
+|OpenPrice: $OpenPrice													|
+=========================================================================
+#set($Highest = $stock.get("Highest"))
+|Highest: $Highest														|
+=========================================================================
+#set($Lowest = $stock.get("Lowest"))
+|Lowest: $Lowest														|
+=========================================================================
+#set($TradingVolume = $stock.get("TradingVolume"))
+|TradingVolume: $TradingVolume											|
+=========================================================================
+#set($PE = $stock.get("PE"))
+|PE: $PE																|
+=========================================================================
+#set($Dividend = $stock.get("Dividend"))
+|Dividend: $Dividend													|
+=========================================================================
+#set($YearHigh = $stock.get("YearHigh"))
+|YearHigh: $YearHigh													|
+=========================================================================
+#set($FwPE = $stock.get("FwPE"))
+|FwPE: $FwPE															|
+=========================================================================
+#set($Yield = $stock.get("Yield"))
+|Yield: $Yield															|
+=========================================================================
+#set($YearLow = $stock.get("YearLow"))
+|YearLow: $YearLow														|
+=========================================================================
+#set($Beta = $stock.get("Beta"))
+|Beta: $Beta															|
+=========================================================================
+#set($AvgVol = $stock.get("AvgVol"))
+|AvgVol: $AvgVol														|
+=========================================================================
+#set($EPS = $stock.get("EPS"))
+|EPS: $EPS																|
+=========================================================================
+#set($ForeignRoom = $stock.get("ForeignRoom"))
+|ForeignRoom: $ForeignRoom												|
+=========================================================================
+#set($ForeignBuyVolume = $stock.get("ForeignBuyVolume"))
+|ForeignBuyVolume: $ForeignBuyVolume									|
+=========================================================================
+#set($PB = $stock.get("PB"))
+|PB: $PB																|
+=========================================================================
+#set($BVPS = $stock.get("BVPS"))
+|BVPS: $BVPS															|
+=========================================================================
+#set($BVPS = $stock.get("BVPS"))
+|BVPS: $BVPS															|
+=========================================================================
+#set($BuyRedundancy = $stock.get("BuyRedundancy"))
+|BuyRedundancy: $BuyRedundancy											|
+=========================================================================
+#set($SellRedundancy = $stock.get("SellRedundancy"))
+|SellRedundancy: $SellRedundancy										|
+=========================================================================
+#set($ClosePrice = $stock.get("ClosePrice"))
+|ClosePrice: $ClosePrice												|
+=========================================================================
 #end
 #end
 #end
