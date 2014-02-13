@@ -24,7 +24,7 @@ $logger.info("Parse  transaction at index 3")
 #set( $msg = "Insert to db ['${td1.nodeValue.trim()}','$td2.nodeValue.trim()']")
 $logger.info($msg)
 #set( $val =  $helper.getLong($val))
-#set( $rs = $helper.update($dataSource,"INSERT INTO top_stock(stock_code,val,tran_date)  VALUES(?,?,?)",[],[$td1.nodeValue.trim(),$val,$tran_date.nodeValue.trim()]))
+#set( $rs = $helper.update($dataSource,"INSERT INTO top_stock(stock_code,val,tran_date)  VALUES(?,?,?) ON DUPLICATE KEY UPDATE val=?",[],[$td1.nodeValue.trim(),$val,$tran_date.nodeValue.trim(),$val]))
 ##get stock details
 #set($s =  $helper.executeGet("http://finance.vietstock.vn/AjaxData/TradingResult/GetStockData.ashx?scode=${td1.nodeValue.trim()}","JSON"))
 #set($stock = $s.get(0))
@@ -39,6 +39,9 @@ $logger.info($msg)
 =========================================================================
 #set($TradingVolume = $stock.get("TradingVolume"))
 |TradingVolume: $TradingVolume											|
+=========================================================================
+#set($CapitalLevel = $stock.get("CapitalLevel"))
+|CapitalLevel: $CapitalLevel											|
 =========================================================================
 #set($PE = $stock.get("PE"))
 |PE: $PE																|
@@ -91,6 +94,35 @@ $logger.info($msg)
 #set($ClosePrice = $stock.get("ClosePrice"))
 |ClosePrice: $ClosePrice												|
 =========================================================================
+#set($CloseDateView = $stock.get("CloseDateView"))
+|CloseDateView: $CloseDateView											|
+=========================================================================
+#set($ClosePrice = $stock.get("ClosePrice"))
+|ClosePrice: $ClosePrice												|
+========================================================================= 
+#set($ClosePrice = $helper.getInteger($ClosePrice))
+#set($OpenPrice = $helper.getInteger($OpenPrice))
+#set($Highest = $helper.getInteger($Highest))
+#set($Lowest = $helper.getInteger($Lowest))
+#set($TradingVolume = $helper.getLong($TradingVolume))
+#set($CapitalLevel = $helper.getLong($CapitalLevel))
+#set($BuyRedundancy = $helper.getLong($BuyRedundancy)) 
+#set($SellRedundancy = $helper.getLong($SellRedundancy))
+#set($YearHigh = $helper.getLong($YearHigh))
+#set($YearLow = $helper.getLong($YearLow))
+#set($AvgVol = $helper.getLong($AvgVol))
+#set($ForeignBuyVolume = $helper.getLong($ForeignBuyVolume))
+#set($ForeignRoom = $helper.getFloat($ForeignRoom))
+#set($Dividend = $helper.getLong($Dividend))
+#set($Yield = $helper.getFloat($Yield))
+#set($Beta = $helper.getFloat($Beta))
+#set($EPS = $helper.getLong($EPS))
+#set($PE = $helper.getFloat($PE))
+#set($FwPE = $helper.getFloat($FwPE))
+#set($BVPS = $helper.getFloat($BVPS))
+#set($PB = $helper.getFloat($PB))
+#set($params = [$td1.nodeValue.trim(),$ClosePrice,$OpenPrice,$Highest,$Lowest,$TradingVolume,$CapitalLevel,$BuyRedundancy,$SellRedundancy,$YearHigh,$YearLow,$AvgVol,$ForeignBuyVolume,$ForeignRoom,$Dividend,$Yield,$Beta,$EPS,$PE,$FwPE,$BVPS,$PB,$CloseDateView,$ClosePrice,$OpenPrice,$Highest,$Lowest,$TradingVolume,$CapitalLevel,$BuyRedundancy,$SellRedundancy,$YearHigh,$YearLow,$AvgVol,$ForeignBuyVolume,$ForeignRoom,$Dividend,$Yield,$Beta,$EPS,$PE,$FwPE,$BVPS,$PB])
+#set( $rs = $helper.update($dataSource,"INSERT INTO best_stock(top_stock,close_price,open_price, cel_price, flo_price, vol, fund, odd_buy, odd_sell, cel_price_52W, flo_price_52W, vol_52W, foreign_buy, foreign_percent, common_dividend, common_dividend_percent, beta, eps, pe, fpe, bvps, pb, tran_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)  ON DUPLICATE KEY UPDATE close_price=?,open_price=?, cel_price=?, flo_price=?, vol=?, fund=?, odd_buy=?, odd_sell=?, cel_price_52W=?, flo_price_52W=?, vol_52W=?, foreign_buy=?, foreign_percent=?, common_dividend=?, common_dividend_percent=?, beta=?, eps=?, pe=?, fpe=?, bvps=?, pb=?",[],$params))
 #end
 #end
 #end
