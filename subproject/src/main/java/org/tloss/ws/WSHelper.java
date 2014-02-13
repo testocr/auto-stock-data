@@ -139,6 +139,18 @@ public class WSHelper {
 		String responseBody = httpclient.execute(httpGetStepOne,
 				responseHandler);
 		if ("JSON".endsWith(format)) {
+			try {
+				step++;
+				logger.info("write content to file : " + "step_" + step
+						+ ".html");
+				FileOutputStream fileOutputStream = new FileOutputStream(
+						"step_" + step + ".html");
+				fileOutputStream.write(responseBody.getBytes());
+				fileOutputStream.flush();
+				fileOutputStream.close();
+			} catch (Exception e) {
+				logger.error("Error write file.", e);
+			}
 			Object obj = JSONValue.parse(responseBody);
 			return obj;
 		}
@@ -273,6 +285,12 @@ public class WSHelper {
 				if (objects[i] != null) {
 					if (objects[i] instanceof Long) {
 						preparedStatement.setLong(1 + i, (Long) objects[i]);
+					} else if (objects[i] instanceof Integer) {
+						preparedStatement.setInt(1 + i, (Integer) objects[i]);
+					} else if (objects[i] instanceof Float) {
+						preparedStatement.setFloat(1 + i, (Float) objects[i]);
+					} else if (objects[i] instanceof Double) {
+						preparedStatement.setDouble(1 + i, (Double) objects[i]);
 					} else if (objects[i] instanceof String) {
 						preparedStatement.setString(1 + i,
 								(String) objects[i].toString());
@@ -286,6 +304,7 @@ public class WSHelper {
 
 	public int update(DataSource dataSource, String sql, List<?> formats,
 			List<?> strParams) {
+		logger.info("execute SQL: "+sql);
 		Connection connection = null;
 		PreparedStatement preparedStatement = null;
 		try {
@@ -339,5 +358,11 @@ public class WSHelper {
 		if (val == null || "".equals(val))
 			return null;
 		return Long.parseLong(val);
+	}
+
+	public Float getFloat(String val) {
+		if (val == null || "".equals(val))
+			return null;
+		return Float.parseFloat(val);
 	}
 }
