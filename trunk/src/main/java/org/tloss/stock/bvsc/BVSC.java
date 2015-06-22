@@ -595,7 +595,7 @@ public class BVSC implements IStock {
 					}
 				});
 		BVSC bvsc = new BVSC();
-		bvsc.login("001C502292", RSAUtils.getPassword());
+		bvsc.login("001C502292", RSAUtils.getPassword("/password.properties"));
 		System.out.println(bvsc.getAmount());
 		StockOrderPage orderPage = bvsc.getNormalOrderList(1, 5);
 		for (int i = 0; i < orderPage.getPageNumber(); i++) {
