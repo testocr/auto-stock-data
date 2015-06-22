@@ -96,12 +96,12 @@ public class RSAUtils {
 		return keyPair;
 	}
 
-	public static String getPassword() {
+	public static String getPassword(String resource) {
 		String rs = null;
 		try {
 			Properties properties = new Properties();
 			properties.load(RSAUtils.class
-					.getResourceAsStream("/password.properties"));
+					.getResourceAsStream(resource));
 			rs = RSAUtils.decrypt(
 					Base64.decodeBase64(properties.getProperty("password")),
 					RSAUtils.getKeyPair().getPrivate());
@@ -110,12 +110,12 @@ public class RSAUtils {
 		}
 		return rs;
 	}
-	public static String getPin() {
+	public static String getPin(String resource) {
 		String rs = null;
 		try {
 			Properties properties = new Properties();
 			properties.load(RSAUtils.class
-					.getResourceAsStream("/password.properties"));
+					.getResourceAsStream(resource));
 			rs = RSAUtils.decrypt(
 					Base64.decodeBase64(properties.getProperty("pin")),
 					RSAUtils.getKeyPair().getPrivate());
@@ -124,4 +124,5 @@ public class RSAUtils {
 		}
 		return rs;
 	}
+	
 }
