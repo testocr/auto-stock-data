@@ -2,6 +2,7 @@ package org.tloss.stock.strade;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -121,6 +122,8 @@ public class Strade implements IStock {
 				BufferedImage img = ImageIO.read(in);
 				String fileName = captcha.antiNoise(img, "captcha");
 				String result = captcha.recognizeText(fileName, "captcha");
+				File file =  new File("captcha",fileName);
+				file.delete();
 				if (result != null && result.trim().length() >= 5) {
 					stop = true;
 					return result.trim();
@@ -634,7 +637,6 @@ public class Strade implements IStock {
 						for (int i = 0; i < tds.size() && !skip; i++) {
 							StringUtils.Result tdCont = StringUtils.search(tds
 									.get(i).getResult(), 0, "\">", "</td>");
-							System.out.println(order);
 							if (i == 0 && "\"></td>".equals(tdCont.getResult())) {
 								skip = true;
 							} else {

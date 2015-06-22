@@ -78,7 +78,7 @@ public class OCR {
             outputGobbler.start();
 
             int w = process.waitFor();
-            System.out.println("Exit value = " + w);
+            //System.out.println("Exit value = " + w);
 
             if (w == 0) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(tempTessOutputFile), "UTF-8"));
@@ -133,7 +133,7 @@ class StreamGobbler extends Thread {
             BufferedReader br = new BufferedReader(isr);
             String line = null;
             while ((line = br.readLine()) != null) {
-                System.out.println(line);
+               // System.out.println(line);
                 outputMessage.append(line).append("\n");
             }
         } catch (IOException ioe) {

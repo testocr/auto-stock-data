@@ -68,11 +68,12 @@ public class Captcha {
 				toBufferedImage(transformGrayToTransparency(img, colors)), 0,
 				0, new Color(0xFFFFFF), null);
 		String fileName = "captcha" + System.nanoTime();
-		String fileName1 = fileName + ".png";
+		
 		ImageIO.write(image, "jpg", new File(folder + File.separator + fileName
 				+ ".jpg"));
+		/*String fileName1 = fileName + ".png";
 		ImageIO.write(image, "png", new File(folder + File.separator
-				+ fileName1));
+				+ fileName1));*/
 		return fileName + ".jpg";
 	}
 
