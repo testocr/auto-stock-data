@@ -35,10 +35,10 @@ import net.sourceforge.vietocr.utilities.Utilities;
 public class Captcha {
 	int[] colors;
 
-	public Captcha() {
+	public Captcha(String fileName) {
 		Properties properties = new Properties();
 		try {
-			properties.load(new FileInputStream("vatgia.captcha.properties"));
+			properties.load(new FileInputStream(fileName));
 			String[] colors = properties.getProperty("colors", "").split(",");
 			if (colors == null || colors.length == 0
 					|| (colors.length == 1 && "".equals(colors[0]))) {
@@ -57,7 +57,7 @@ public class Captcha {
 
 	}
 
-	public String antiNoise(BufferedImage img) throws Exception {
+	public String antiNoise(BufferedImage img,String folder) throws Exception {
 		// BufferedImage img = ImageIO.read(new File("security_code1.png"));
 		BufferedImage image = new BufferedImage(img.getWidth(),
 				img.getHeight(), BufferedImage.TYPE_INT_RGB);
@@ -69,12 +69,12 @@ public class Captcha {
 				0, new Color(0xFFFFFF), null);
 		String fileName = "captcha" + System.nanoTime();
 		String fileName1 = fileName + ".png";
-		ImageIO.write(image, "jpg", new File("captcha\\" + fileName + ".jpg"));
-		ImageIO.write(image, "png", new File("captcha\\" + fileName1));
+		ImageIO.write(image, "jpg", new File(folder+"\\" + fileName + ".jpg"));
+		ImageIO.write(image, "png", new File(folder+"\\" + fileName1));
 		return fileName + ".jpg";
 	}
 
-	public String recognizeText(String fileName) throws Exception {
+	public String recognizeText(String fileName,String folder) throws Exception {
 		String tessPath;
 		String curLangCode = "eng"; // default language
 		String psm = "3"; // Fully automatic page segmentation, but no OSD
@@ -83,7 +83,7 @@ public class Captcha {
 		tessPath = new File(baseDir, "tesseract").getPath();
 		OCR ocrEngine = new OCR(tessPath);
 		ocrEngine.setPSM(psm);
-		File imageFile = new File("captcha\\" + fileName);
+		File imageFile = new File(folder+"\\" + fileName);
 		List<IIOImage> iioImageList = ImageIOHelper.getIIOImageList(imageFile);
 		List<File> tempTiffFiles = null;
 		tempTiffFiles = ImageIOHelper.createTiffFiles(iioImageList, -1);
@@ -202,13 +202,16 @@ public class Captcha {
 	}
 
 	public static void main(String[] args) throws Exception {
-		Captcha captcha = new Captcha();
+		for(int i=190;i<255;i++){
+			System.out.printf("%x%x%x,", i,i,i);
+		}
+		Captcha captcha = new Captcha("strade.captcha.properties");
 		BufferedImage img = ImageIO.read(new File(
-				"captcha\\security_code.php.png"));
-		String fileName = captcha.antiNoise(img);
+				"d:\\TungT\\work\\GetCaptchaImage.png"));
+		String fileName = captcha.antiNoise(img,"d:\\TungT\\work\\");
 		System.out.println(fileName);
-		// String fileName = "captcha32928564430760.jpg";
-		String result = captcha.recognizeText(fileName);
+		//String fileName = "captcha32928564430760.jpg";
+		String result = captcha.recognizeText(fileName,"d:\\TungT\\work\\");
 		System.out.println(result);
 		System.out.println(captcha.validate(result.trim()));
 
