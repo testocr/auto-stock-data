@@ -4,15 +4,11 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.imageio.ImageIO;
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -37,7 +33,6 @@ import org.jboss.aerogear.unifiedpush.JavaSender;
 import org.jboss.aerogear.unifiedpush.SenderClient;
 import org.jboss.aerogear.unifiedpush.message.MessageResponseCallback;
 import org.jboss.aerogear.unifiedpush.message.UnifiedMessage;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.tloss.common.Image;
 import org.tloss.common.utils.Utils;
@@ -48,9 +43,9 @@ import org.tloss.stock.StockInfo;
 import org.tloss.stock.StockOrderPage;
 import org.tloss.stock.TrustEverythingSSLTrustManager;
 import org.tloss.stock.utils.HtmlUtils;
-import org.tloss.stock.utils.StringUtils;
 import org.tloss.stock.utils.HtmlUtils.Form;
 import org.tloss.stock.utils.HtmlUtils.Input;
+import org.tloss.stock.utils.StringUtils;
 import org.tloss.vatgia.Captcha;
 
 public class Strade implements IStock {
@@ -126,11 +121,11 @@ public class Strade implements IStock {
 				BufferedImage img = ImageIO.read(in);
 				String fileName = captcha.antiNoise(img, "captcha");
 				String result = captcha.recognizeText(fileName, "captcha");
-				if(result!=null&& result.trim().length()>=5){
-					stop =  true;
-					return  result.trim();
+				if (result != null && result.trim().length() >= 5) {
+					stop = true;
+					return result.trim();
 				}
-				
+
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -222,11 +217,10 @@ public class Strade implements IStock {
 					inputStream.close();
 					response = writer.toString();
 					// https://www.baovietsecurities.com.vn/WebOnlineTrading/Default.aspx
-					
-					
-					if (response1.getStatusLine().getStatusCode()==302) {
+
+					if (response1.getStatusLine().getStatusCode() == 302) {
 						httpget = new HttpGet(
-								"https://www.baovietsecurities.com.vn/WebOnlineTrading/Default.aspx");
+								"https://www.strade.com.vn/OnlineTrading/");
 						httpget.setHeader(new BasicHeader("User-Agent",
 								"Mozilla/5.0 (Windows NT 6.3; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0"));
 						httpget.setHeader(new BasicHeader("Accept",
@@ -235,7 +229,9 @@ public class Strade implements IStock {
 								"en-US,en;q=0.5"));
 						httpget.setHeader(new BasicHeader("Accept-Encoding",
 								"gzip, deflate"));
-
+						httpget.setHeader(new BasicHeader(
+								"Referer",
+								"https://www.strade.com.vn/OnlineTrading/Account/Login?ReturnUrl=%2fOnlineTrading"));
 						httpget.setHeader(new BasicHeader("Connection",
 								"keep-alive"));
 						response1 = httpclient.execute(httpget);
@@ -246,8 +242,6 @@ public class Strade implements IStock {
 						IOUtils.copy(inputStream, writer);
 						inputStream.close();
 						response = writer.toString();
-
-						// System.out.println(response);
 						return true;
 					}
 
@@ -302,8 +296,13 @@ public class Strade implements IStock {
 
 	public int getAmount() {
 		try {
-			HttpGet httpget = new HttpGet(
-					"https://www.baovietsecurities.com.vn/WebOnlineTrading/OnlineService.svc/accountsummary?reqJSONNocache=4&pv_acctno=0101502292&pv_symbol=&pv_price=0");
+			List<NameValuePair> formparams = new ArrayList<NameValuePair>();
+			formparams.add(new BasicNameValuePair("pv_afacctno", "0001102285"));
+			UrlEncodedFormEntity urlEntity = new UrlEncodedFormEntity(
+					formparams, "UTF-8");
+			HttpPost httpget = new HttpPost(
+					"https://www.strade.com.vn/OnlineTrading/Balance/GetGeneralAccountInfor");
+			httpget.setEntity(urlEntity);
 			httpget.setHeader(new BasicHeader("User-Agent",
 					"Mozilla/5.0 (Windows NT 6.3; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0"));
 			httpget.setHeader(new BasicHeader("Accept",
@@ -317,7 +316,7 @@ public class Strade implements IStock {
 
 			httpget.setHeader(new BasicHeader("Connection", "keep-alive"));
 			httpget.setHeader(new BasicHeader("Referer",
-					"https://www.baovietsecurities.com.vn/WebOnlineTrading/Default.aspx"));
+					"https://www.strade.com.vn/OnlineTrading/"));
 			HttpResponse response1 = httpclient.execute(httpget);
 
 			HttpEntity entity = response1.getEntity();
@@ -328,7 +327,7 @@ public class Strade implements IStock {
 			String response = writer.toString();
 			JSONObject jsonObject = new JSONObject(response);
 
-			return jsonObject.getInt("cashReal");
+			return Integer.parseInt(jsonObject.getString("bl_balance"));
 			// System.out.println(response);
 		} catch (Exception e) {
 			sendErrorNotification("Error at getAmount", e);
@@ -545,27 +544,18 @@ public class Strade implements IStock {
 		StockOrderPage rs = new StockOrderPage();
 		try {
 			HttpGet httpget = new HttpGet(
-					"https://www.baovietsecurities.com.vn/WebOnlineTrading/OnlineService.svc/getNormalOrderList?_search=false&nd="
-							+ System.currentTimeMillis()
-							+ "&rows="
-							+ numberItems
-							+ "&page="
-							+ page
-							+ "&sidx=orderIDDesc&sord=desc");
+					"https://www.strade.com.vn/OnlineTrading/");
 			httpget.setHeader(new BasicHeader("User-Agent",
 					"Mozilla/5.0 (Windows NT 6.3; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0"));
 			httpget.setHeader(new BasicHeader("Accept",
-					"application/json, text/javascript, */*; q=0.01"));
+					"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"));
 			httpget.setHeader(new BasicHeader("Accept-Language",
 					"en-US,en;q=0.5"));
 			httpget.setHeader(new BasicHeader("Accept-Encoding",
 					"gzip, deflate"));
-			httpget.setHeader(new BasicHeader("X-Requested-With",
-					"XMLHttpRequest"));
-
-			httpget.setHeader(new BasicHeader("Connection", "keep-alive"));
 			httpget.setHeader(new BasicHeader("Referer",
-					"https://www.baovietsecurities.com.vn/WebOnlineTrading/Default.aspx"));
+					"https://www.strade.com.vn/OnlineTrading/"));
+			httpget.setHeader(new BasicHeader("Connection", "keep-alive"));
 			HttpResponse response1 = httpclient.execute(httpget);
 
 			HttpEntity entity = response1.getEntity();
@@ -574,50 +564,178 @@ public class Strade implements IStock {
 			IOUtils.copy(inputStream, writer);
 			inputStream.close();
 			String response = writer.toString();
-			System.out.println(response);
-			JSONObject jsonObject = new JSONObject(response);
-			// rs.add(jsonObject);
-			if (!jsonObject.isNull("rows")) {
-				JSONArray rows = jsonObject.getJSONArray("rows");
-				Order order;
-				for (int i = 0; i < rows.length(); i++) {
-					JSONObject tmp = rows.getJSONObject(i);
-					order = new Order();
-					order.setAcctno(tmp.getString("acctno"));
-					order.setCancelable(tmp.getBoolean("cancelable"));
-					order.setCustodycd(tmp.getString("custodycd"));
-					order.setExecType(tmp.getString("execType"));
-					order.setExecTypeDesc(tmp.getString("execTypeDesc"));
-					order.setFeedbackMsg(tmp.getString("feedbackMsg"));
-					order.setIsDisposal(tmp.getBoolean("isDisposal"));
-					order.setLimitPrice(tmp.getInt("limitPrice"));
-					order.setModifiable(tmp.getBoolean("modifiable"));
-					order.setOrderer(tmp.getString("orderer"));
-					order.setOrderFrom(tmp.getString("orderFrom"));
-					order.setOrderID(tmp.getString("orderID"));
-					order.setOrderIDDesc(tmp.getString("orderIDDesc"));
-					order.setOrderType(tmp.getString("orderType"));
-					order.setPriceMatched(tmp.getInt("priceMatched"));
-					order.setPriceOrder(tmp.getInt("priceOrder"));
-					order.setQtyCancel(tmp.getInt("qtyCancel"));
-					order.setQtyMatched(tmp.getInt("qtyMatched"));
-					order.setQtyModified(tmp.getInt("qtyModified"));
-					order.setQtyOrder(tmp.getInt("qtyOrder"));
-					order.setQtyRemain(tmp.getInt("qtyRemain"));
-					order.setQuoteQtty(tmp.getInt("quoteQtty"));
-					order.setRootOrderID(tmp.getString("rootOrderID"));
-					order.setSessionCd(tmp.getString("sessionCd"));
-					order.setStatus(tmp.getString("status"));
-					order.setStatusValue(tmp.getString("statusValue"));
-					order.setSymbol(tmp.getString("symbol"));
-					order.setTime(tmp.getString("time"));
-					order.setTimeType(tmp.getString("timeType"));
-					order.setTimeTypeValue(tmp.getString("timeTypeValue"));
-					rs.getOrders().add(order);
+			StringUtils.Result OrderList_CallbackState = StringUtils.search(
+					response, 0,
+					"<input type=\"hidden\" name=\"OrderList$CallbackState\"",
+					"/>");
+			if (OrderList_CallbackState.getResult() != null) {
+				String OrderList_CallbackStateValue = HtmlUtils
+						.getAttributeValue("value",
+								OrderList_CallbackState.getResult());
+				List<NameValuePair> formparams = new ArrayList<NameValuePair>();
+
+				formparams.add(new BasicNameValuePair("DXCallbackName",
+						"OrderList"));
+				formparams.add(new BasicNameValuePair("DXCallbackArgument",
+						"c0:KV|2;[];CR|2;{};GB|9;7|REFRESH;"));
+				formparams.add(new BasicNameValuePair("OrderList$DXSelInput",
+						""));
+				formparams.add(new BasicNameValuePair("OrderList$DXKVInput",
+						"[]"));
+				formparams
+						.add(new BasicNameValuePair("OrderList$CallbackState",
+								OrderList_CallbackStateValue));
+				formparams.add(new BasicNameValuePair(
+						"OrderList$DXColResizedInput", "{}"));
+				formparams.add(new BasicNameValuePair("OrderList$DXSyncInput",
+						""));
+				formparams.add(new BasicNameValuePair("DXMVCEditorsValues",
+						"{}"));
+
+				UrlEncodedFormEntity urlEntity = new UrlEncodedFormEntity(
+						formparams, "UTF-8");
+				HttpPost httpPost = new HttpPost(
+						"https://www.strade.com.vn/OnlineTrading/Trade/getOrderList");
+				httpPost.setEntity(urlEntity);
+				httpPost.setHeader(new BasicHeader("User-Agent",
+						"Mozilla/5.0 (Windows NT 6.3; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0"));
+				httpPost.setHeader(new BasicHeader("Accept",
+						"application/json, text/javascript, */*; q=0.01"));
+				httpPost.setHeader(new BasicHeader("Accept-Language",
+						"en-US,en;q=0.5"));
+				httpPost.setHeader(new BasicHeader("Accept-Encoding",
+						"gzip, deflate"));
+				httpPost.setHeader(new BasicHeader("X-Requested-With",
+						"XMLHttpRequest"));
+
+				httpPost.setHeader(new BasicHeader("Connection", "keep-alive"));
+				httpPost.setHeader(new BasicHeader("Referer",
+						"https://www.strade.com.vn/OnlineTrading/"));
+				response1 = httpclient.execute(httpPost);
+
+				entity = response1.getEntity();
+				writer = new StringWriter();
+				inputStream = decompress(entity);
+				IOUtils.copy(inputStream, writer);
+				inputStream.close();
+				response = writer.toString();
+				StringUtils.Result OrderList_DXMainTable = StringUtils.search(
+						response, 0, "<table id=\"OrderList_DXMainTable\"",
+						"</table>");
+				Order order = null;
+				if (OrderList_DXMainTable.getResult() != null) {
+					List<StringUtils.Result> results = StringUtils.searchs(
+							OrderList_DXMainTable.getResult(), 0, "<tr",
+							"</tr>");
+					for (StringUtils.Result r : results) {
+						List<StringUtils.Result> tds = StringUtils.searchs(
+								r.getResult(), 0, "<td", "</td>");
+						boolean skip = false;
+						for (int i = 0; i < tds.size() && !skip; i++) {
+							StringUtils.Result tdCont = StringUtils.search(tds
+									.get(i).getResult(), 0, "\">", "</td>");
+							System.out.println(order);
+							if (i == 0 && "\"></td>".equals(tdCont.getResult())) {
+								skip = true;
+							} else {
+								if (i == 0) {
+									order = new Order();
+									rs.getOrders().add(order);
+								} else if (i == 2) {
+									order.setAcctno(tds
+											.get(i)
+											.getResult()
+											.substring(
+													tdCont.getStartIndex() + 2,
+													tdCont.getEndIndex()));
+								} else if (i == 3) {
+									order.setSymbol(tds
+											.get(i)
+											.getResult()
+											.substring(
+													tdCont.getStartIndex() + 2,
+													tdCont.getEndIndex()));
+								} else if (i == 4) {
+									order.setTime(tds
+											.get(i)
+											.getResult()
+											.substring(
+													tdCont.getStartIndex() + 2,
+													tdCont.getEndIndex()));
+								} else if (i == 5) {
+									order.setExecType(tds
+											.get(i)
+											.getResult()
+											.substring(
+													tdCont.getStartIndex() + 2,
+													tdCont.getEndIndex()));
+								} else if (i == 6) {
+									order.setStatus(tds
+											.get(i)
+											.getResult()
+											.substring(
+													tdCont.getStartIndex() + 2,
+													tdCont.getEndIndex()));
+								} else if (i == 7) {
+									order.setOrderType(tds
+											.get(i)
+											.getResult()
+											.substring(
+													tdCont.getStartIndex() + 2,
+													tdCont.getEndIndex()));
+								} else if (i == 8) {
+									order.setOrderFrom(tds
+											.get(i)
+											.getResult()
+											.substring(
+													tdCont.getStartIndex() + 2,
+													tdCont.getEndIndex()));
+								} else if (i == 9) {
+									order.setQtyOrder(Integer.parseInt(tds
+											.get(i)
+											.getResult()
+											.substring(
+													tdCont.getStartIndex() + 2,
+													tdCont.getEndIndex())));
+								} else if (i == 10) {
+									order.setPriceOrder(Integer.parseInt(tds
+											.get(i)
+											.getResult()
+											.substring(
+													tdCont.getStartIndex() + 2,
+													tdCont.getEndIndex())
+											.replace(",", "")));
+								} else if (i == 11) {
+									order.setQuoteQtty(Integer.parseInt(tds
+											.get(i)
+											.getResult()
+											.substring(
+													tdCont.getStartIndex() + 2,
+													tdCont.getEndIndex())
+											.replace(",", "")));
+								} else if (i == 12) {
+									order.setQtyMatched(Integer.parseInt(tds
+											.get(i)
+											.getResult()
+											.substring(
+													tdCont.getStartIndex() + 2,
+													tdCont.getEndIndex())
+											.replace(",", "")));
+								} else if (i == 13) {
+									order.setPriceMatched(Integer.parseInt(tds
+											.get(i)
+											.getResult()
+											.substring(
+													tdCont.getStartIndex() + 2,
+													tdCont.getEndIndex())
+											.replace(",", "")));
+								}
+							}
+						}
+					}
 				}
+
 			}
-			rs.setTotalRecords(jsonObject.getInt("records"));
-			rs.setPageNumber(jsonObject.getInt("total"));
 		} catch (Exception e) {
 			sendErrorNotification("Error at getNormalOrderList", e);
 		}
@@ -637,14 +755,7 @@ public class Strade implements IStock {
 		Strade bvsc = new Strade();
 		bvsc.login("017C102285", RSAUtils.getPassword("/strade.properties"));
 		System.out.println(bvsc.getAmount());
-		StockOrderPage orderPage = bvsc.getNormalOrderList(1, 5);
-		for (int i = 0; i < orderPage.getPageNumber(); i++) {
-			List<Order> orders = orderPage.getOrders();
-			for (Order order : orders) {
-				System.out.println(order);
-			}
-			orderPage = bvsc.getNormalOrderList(i + 2, 5);
-		}
+		bvsc.getNormalOrderList(1, 5);
 		// System.out.println(bvsc.getStockInfo("HQC"));
 		// bvsc.buyStock("HQC", 5900, 150, RSAUtils.getPin());
 		// bvsc.cancelOder("HQC", "8000160615000047", RSAUtils.getPin());
