@@ -241,7 +241,7 @@ public class Vatgia {
 		}
 	}
 
-	Captcha captcha = new Captcha();
+	Captcha captcha = new Captcha("vatgia.captcha.properties");
 
 	public void convert() throws Exception {
 		initHttpClient(httpclient);
@@ -260,8 +260,8 @@ public class Vatgia {
 						false, httpclient);
 				InputStream in = new ByteArrayInputStream(image.getData());
 				BufferedImage img = ImageIO.read(in);
-				String fileName = captcha.antiNoise(img);
-				String result = captcha.recognizeText(fileName);
+				String fileName = captcha.antiNoise(img,"captcha");
+				String result = captcha.recognizeText(fileName,"captcha");
 				System.out.println("captcha result: " + result);
 				if (captcha.validate(result.trim())) {
 					mustWait();
