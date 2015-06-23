@@ -351,7 +351,7 @@ public class BVSC implements IStock {
 		return rs;
 	}
 
-	public boolean cancelOder(String id, String orderId, String pin) {
+	public boolean cancelOder(String id, String orderId, String pin,String Qtty,String Price) {
 		boolean rs = false;
 		try {
 

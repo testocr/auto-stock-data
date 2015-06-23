@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -122,7 +123,7 @@ public class Strade implements IStock {
 				BufferedImage img = ImageIO.read(in);
 				String fileName = captcha.antiNoise(img, "captcha");
 				String result = captcha.recognizeText(fileName, "captcha");
-				File file =  new File("captcha",fileName);
+				File file = new File("captcha", fileName);
 				file.delete();
 				if (result != null && result.trim().length() >= 5) {
 					stop = true;
@@ -347,24 +348,30 @@ public class Strade implements IStock {
 		StockInfo rs = null;
 		try {
 
-			StringEntity urlEntity = new StringEntity("{\"pv_symbol\":\"" + id
-					+ "\",\"pv_ordertype\":1,\"pv_acctno\":\"0101502292\"}",
-					"UTF-8");
+			List<NameValuePair> formparams = new ArrayList<NameValuePair>();
+			formparams.add(new BasicNameValuePair("pv_symbol", id));
+			formparams.add(new BasicNameValuePair("pv_ordertype", "1"));
+			formparams.add(new BasicNameValuePair("pv_acctno", "0001102285"));
+			UrlEncodedFormEntity urlEntity = new UrlEncodedFormEntity(
+					formparams, "UTF-8");
 			HttpPost httppost = new HttpPost(
-					"https://www.baovietsecurities.com.vn/WebOnlineTrading/OnlineService.svc/getStockInfo");
+					"https://www.strade.com.vn/OnlineTrading/Acc/getStockInfo");
 			httppost.setEntity(urlEntity);
 			httppost.setHeader(new BasicHeader("User-Agent",
 					"Mozilla/5.0 (Windows NT 6.3; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0"));
-			httppost.setHeader(new BasicHeader("Accept",
-					"application/json, text/javascript, */*; q=0.01"));
+
 			httppost.setHeader(new BasicHeader("Accept-Language",
 					"en-US,en;q=0.5"));
 			httppost.setHeader(new BasicHeader("Accept-Encoding",
 					"gzip, deflate"));
 			httppost.setHeader(new BasicHeader("X-Requested-With",
 					"XMLHttpRequest"));
+			httppost.setHeader(new BasicHeader(
+					"DXScript",
+					"1_145,1_81,1_137,1_136,1_130,1_135,1_121,14_25,14_15,1_138,1_80,14_2,1_88,14_7,1_78,1_128,1_90,1_89,14_8,1_143,1_114,1_144,1_109,14_9,14_24,1_131,1_85,1_110,1_99,1_106,1_140,1_118,1_120,1_129,1_123,14_16,14_18,1_127,1_134,14_21,14_23,1_91,1_139,1_115,14_11,1_126"));
+
 			httppost.setHeader(new BasicHeader("Referer",
-					"https://www.baovietsecurities.com.vn/WebOnlineTrading/Default.aspx"));
+					"https://www.strade.com.vn/OnlineTrading/"));
 			httppost.setHeader(new BasicHeader("Cache-Control", "no-cache"));
 			httppost.setHeader(new BasicHeader("Content-Type",
 					"application/json; charset=UTF-8"));
@@ -378,7 +385,7 @@ public class Strade implements IStock {
 			IOUtils.copy(inputStream, writer);
 			inputStream.close();
 			String response = writer.toString();
-			// System.out.println(response);
+			System.out.println(response);
 			JSONObject jsonObject = new JSONObject(response);
 			rs = new StockInfo();
 			rs.setId(jsonObject.getString("symbol"));
@@ -393,19 +400,18 @@ public class Strade implements IStock {
 		return rs;
 	}
 
-	public boolean cancelOder(String id, String orderId, String pin) {
+	public boolean cancelOder(String id, String orderId, String pin,
+			String Qtty, String Price) {
 		boolean rs = false;
 		try {
 
-			StringEntity urlEntity = new StringEntity(
-					"{\"pv_pin\":\""
-							+ pin
-							+ "\",\"pv_tab\":\"AL\",\"pv_orderID\":\""
-							+ orderId
-							+ "\",\"pv_afacctno\":\"0101502292\",\"pv_quoteqty\":\"0\",\"pv_limitprice\":\"0\",\"pv_isSavedPass\":false}",
+			StringEntity urlEntity = new StringEntity("{\"Symbol\":\"" + id
+					+ "\",\"AfAcctno\":\"0001102285\",\"Qtty\":\"" + Qtty
+					+ "\",\"Price\":\"" + Price
+					+ "\",\"Side\":\"NS\",\"OrderId\":\"" + orderId + "\"}",
 					"UTF-8");
 			HttpPost httppost = new HttpPost(
-					"https://www.baovietsecurities.com.vn/WebOnlineTrading/OnlineService.svc/cancelorder");
+					"https://www.strade.com.vn/OnlineTrading/Order/cancelorder");
 			httppost.setEntity(urlEntity);
 			httppost.setHeader(new BasicHeader("User-Agent",
 					"Mozilla/5.0 (Windows NT 6.3; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0"));
@@ -418,7 +424,7 @@ public class Strade implements IStock {
 			httppost.setHeader(new BasicHeader("X-Requested-With",
 					"XMLHttpRequest"));
 			httppost.setHeader(new BasicHeader("Referer",
-					"https://www.baovietsecurities.com.vn/WebOnlineTrading/Default.aspx"));
+					"https://www.strade.com.vn/OnlineTrading/"));
 			httppost.setHeader(new BasicHeader("Cache-Control", "no-cache"));
 			httppost.setHeader(new BasicHeader("Content-Type",
 					"application/json; charset=UTF-8"));
@@ -534,8 +540,97 @@ public class Strade implements IStock {
 	}
 
 	public boolean sellStock(String id, int amount, int volume, String pin) {
-		// TODO Auto-generated method stub
-		return false;
+		boolean rs = false;
+		try {
+
+			StringEntity urlEntity = new StringEntity(
+					"{\"Side\":\"NS\",\"Symbol\":\""
+							+ id
+							+ "\",\"Qtty\":\""
+							+ volume
+							+ "\",\"PriceType\":\"LO\",\"Action\":\"preview\",\"Price\":\""
+							+ new DecimalFormat("0.0").format((double)amount/1000)
+							+ "\",\"DivQtty\":\""
+							+ volume
+							+ "\",\"AfAcctno\":\"0001102285\",\"pv_ordertab\":\"ORDINPUT\"}",
+					"UTF-8");
+			HttpPost httppost = new HttpPost(
+					"https://www.strade.com.vn/OnlineTrading/Order/orderplacing_advance");
+			httppost.setEntity(urlEntity);
+			httppost.setHeader(new BasicHeader("User-Agent",
+					"Mozilla/5.0 (Windows NT 6.3; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0"));
+			httppost.setHeader(new BasicHeader("Accept",
+					"application/json, text/javascript, */*; q=0.01"));
+			httppost.setHeader(new BasicHeader("Accept-Language",
+					"en-US,en;q=0.5"));
+			httppost.setHeader(new BasicHeader("Accept-Encoding",
+					"gzip, deflate"));
+			httppost.setHeader(new BasicHeader("X-Requested-With",
+					"XMLHttpRequest"));
+			httppost.setHeader(new BasicHeader("Referer",
+					"https://www.strade.com.vn/OnlineTrading/"));
+			httppost.setHeader(new BasicHeader("Cache-Control", "no-cache"));
+			httppost.setHeader(new BasicHeader("Content-Type",
+					"application/json; charset=UTF-8"));
+			httppost.setHeader(new BasicHeader("Connection", "keep-alive"));
+			httppost.setHeader(new BasicHeader("Pragma", "no-cache"));
+
+			HttpResponse response1 = httpclient.execute(httppost);
+			HttpEntity entity = response1.getEntity();
+			StringWriter writer = new StringWriter();
+			InputStream inputStream = decompress(entity);
+			IOUtils.copy(inputStream, writer);
+			inputStream.close();
+			String response = writer.toString();
+			System.out.println(response);
+
+			urlEntity = new StringEntity(
+					"{\"Side\":\"NS\",\"Symbol\":\""
+							+ id
+							+ "\",\"Qtty\":\""
+							+ volume
+							+ "\",\"PriceType\":\"LO\",\"Action\":\"confirmed\",\"Price\":\""
+							+ new DecimalFormat("0.0").format((double)amount/1000)
+							+ "\",\"DivQtty\":\""
+							+ volume
+							+ "\",\"AfAcctno\":\"0001102285\",\"pv_ordertab\":\"ORDINPUT\"}",
+					"UTF-8");
+			httppost = new HttpPost(
+					"https://www.strade.com.vn/OnlineTrading/Order/orderplacing_advance");
+			httppost.setEntity(urlEntity);
+			httppost.setHeader(new BasicHeader("User-Agent",
+					"Mozilla/5.0 (Windows NT 6.3; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0"));
+			httppost.setHeader(new BasicHeader("Accept",
+					"application/json, text/javascript, */*; q=0.01"));
+			httppost.setHeader(new BasicHeader("Accept-Language",
+					"en-US,en;q=0.5"));
+			httppost.setHeader(new BasicHeader("Accept-Encoding",
+					"gzip, deflate"));
+			httppost.setHeader(new BasicHeader("X-Requested-With",
+					"XMLHttpRequest"));
+			httppost.setHeader(new BasicHeader("Referer",
+					"https://www.strade.com.vn/OnlineTrading/"));
+			httppost.setHeader(new BasicHeader("Cache-Control", "no-cache"));
+			httppost.setHeader(new BasicHeader("Content-Type",
+					"application/json; charset=UTF-8"));
+			httppost.setHeader(new BasicHeader("Connection", "keep-alive"));
+			httppost.setHeader(new BasicHeader("Pragma", "no-cache"));
+
+			response1 = httpclient.execute(httppost);
+			entity = response1.getEntity();
+			writer = new StringWriter();
+			inputStream = decompress(entity);
+			IOUtils.copy(inputStream, writer);
+			inputStream.close();
+			response = writer.toString();
+			System.out.println(response);
+			// JSONObject jsonObject = new JSONObject(response);
+			sendNotification("Success order: BUY , stock:" + id + ",vol:"
+					+ volume + ",price:" + amount);
+		} catch (Exception e) {
+			sendErrorNotification("ERROR At buyStock", e);
+		}
+		return rs;
 	}
 
 	public boolean logout() {
@@ -633,6 +728,7 @@ public class Strade implements IStock {
 					for (StringUtils.Result r : results) {
 						List<StringUtils.Result> tds = StringUtils.searchs(
 								r.getResult(), 0, "<td", "</td>");
+
 						boolean skip = false;
 						for (int i = 0; i < tds.size() && !skip; i++) {
 							StringUtils.Result tdCont = StringUtils.search(tds
@@ -643,6 +739,18 @@ public class Strade implements IStock {
 								if (i == 0) {
 									order = new Order();
 									rs.getOrders().add(order);
+									StringUtils.Result oderId = StringUtils
+											.search(tdCont.getResult(), 0,
+													"onfocusrow('", "');");
+									if (oderId.getResult() != null) {
+										order.setOrderID(tdCont
+												.getResult()
+												.substring(
+														oderId.getStartIndex()
+																+ "onfocusrow('"
+																		.length(),
+														oderId.getEndIndex()));
+									}
 								} else if (i == 2) {
 									order.setAcctno(tds
 											.get(i)
@@ -757,10 +865,15 @@ public class Strade implements IStock {
 		Strade bvsc = new Strade();
 		bvsc.login("017C102285", RSAUtils.getPassword("/strade.properties"));
 		System.out.println(bvsc.getAmount());
-		bvsc.getNormalOrderList(1, 5);
+		StockOrderPage orderPage = bvsc.getNormalOrderList(1, 5);
+		for (Order order : orderPage.getOrders()) {
+			System.out.println(order);
+		}
 		// System.out.println(bvsc.getStockInfo("HQC"));
 		// bvsc.buyStock("HQC", 5900, 150, RSAUtils.getPin());
-		// bvsc.cancelOder("HQC", "8000160615000047", RSAUtils.getPin());
+		bvsc.cancelOder("HQC", "8000230615001447", "","150","6.40");
+		//System.out.println(bvsc.getStockInfo("HQC"));
+		bvsc.sellStock("HQC", 6400, 150, "");
 
 	}
 }
