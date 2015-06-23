@@ -19,7 +19,7 @@ public interface IStock {
 
 	public boolean buyStock(String id, int amount, int volume, String pin);
 
-	public boolean cancelOder(String id, String orderId, String pin);
+	public boolean cancelOder(String id, String orderId, String pin,String Qtty,String Price);
 
 	public boolean sellStock(String id, int amount, int volume, String pin);
 
