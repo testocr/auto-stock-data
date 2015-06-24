@@ -871,9 +871,9 @@ public class Strade implements IStock {
 		}
 		// System.out.println(bvsc.getStockInfo("HQC"));
 		// bvsc.buyStock("HQC", 5900, 150, RSAUtils.getPin());
-		bvsc.cancelOder("HQC", "8000230615001447", "","150","6.40");
+		//bvsc.cancelOder("HQC", "8000230615001447", "","150","6.40");
 		//System.out.println(bvsc.getStockInfo("HQC"));
-		bvsc.sellStock("HQC", 6400, 150, "");
+		//bvsc.sellStock("HQC", 6400, 150, "");
 
 	}
 }
