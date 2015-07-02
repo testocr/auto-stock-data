@@ -19,12 +19,15 @@ public class AGPush {
 		return instance;
 	}
 
-	private JavaSender defaultJavaSender = new SenderClient.Builder(
-			"aerogear-gearpush.rhcloud.com/ag-push/").build();
+	private String AppID = "8125ba60-3b6d-408e-8b30-8a22cd39bba9";
+	private String masterKey = "485620e2-59b3-46bc-917c-f25643efef55";
+	private String URL = "https://aerogear-gearpush.rhcloud.com/ag-push/";
+	private JavaSender defaultJavaSender = new SenderClient.Builder(URL)
+			.build();
+
 	public void sendErrorNotification(String info, Exception e) {
 		UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
-				.pushApplicationId("d7ebb4ad-1cda-40a8-8bbb-8fe958d636f3")
-				.masterSecret("68dc7315-410e-447f-b242-6e7c90b04944")
+				.pushApplicationId(AppID).masterSecret(masterKey)
 				.alert(info + " : " + e.getMessage()).build();
 		defaultJavaSender.send(unifiedMessage, new MessageResponseCallback() {
 
@@ -42,8 +45,8 @@ public class AGPush {
 	public void sendNotification(String info) {
 
 		UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
-				.pushApplicationId("d7ebb4ad-1cda-40a8-8bbb-8fe958d636f3")
-				.masterSecret("68dc7315-410e-447f-b242-6e7c90b04944")
+				.pushApplicationId(AppID)
+				.masterSecret(masterKey)
 				.alert(info).build();
 		defaultJavaSender.send(unifiedMessage, new MessageResponseCallback() {
 
