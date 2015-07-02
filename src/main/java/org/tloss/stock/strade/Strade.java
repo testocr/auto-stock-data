@@ -31,11 +31,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.CoreProtocolPNames;
-import org.jboss.aerogear.unifiedpush.JavaSender;
-import org.jboss.aerogear.unifiedpush.SenderClient;
-import org.jboss.aerogear.unifiedpush.message.MessageResponseCallback;
-import org.jboss.aerogear.unifiedpush.message.UnifiedMessage;
 import org.json.JSONObject;
+import org.tloss.agpush.AGPush;
 import org.tloss.common.Image;
 import org.tloss.common.utils.Utils;
 import org.tloss.stock.IStock;
@@ -52,8 +49,6 @@ import org.tloss.vatgia.Captcha;
 
 public class Strade implements IStock {
 	HttpClient httpclient = new DefaultHttpClient();
-	JavaSender defaultJavaSender = new SenderClient.Builder(
-			"https://www.runningchild.com:28443/ag-push/").build();
 
 	private static InputStream decompress(final HttpEntity entity)
 			throws IOException {
@@ -255,47 +250,10 @@ public class Strade implements IStock {
 			}
 
 		} catch (Exception e) {
-			sendErrorNotification("ERROR at login", e);
+			AGPush.getInstance().sendErrorNotification("ERROR at login", e);
 		}
 
 		return false;
-	}
-
-	protected void sendErrorNotification(String info, Exception e) {
-		UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
-				.pushApplicationId("d7ebb4ad-1cda-40a8-8bbb-8fe958d636f3")
-				.masterSecret("68dc7315-410e-447f-b242-6e7c90b04944")
-				.alert(info + " : " + e.getMessage()).build();
-		defaultJavaSender.send(unifiedMessage, new MessageResponseCallback() {
-
-			public void onComplete(int statusCode) {
-				// do cool stuff
-			}
-
-			public void onError(Throwable throwable) {
-				// bring out the bad news
-				throwable.fillInStackTrace();
-			}
-		});
-	}
-
-	protected void sendNotification(String info) {
-
-		UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
-				.pushApplicationId("d7ebb4ad-1cda-40a8-8bbb-8fe958d636f3")
-				.masterSecret("68dc7315-410e-447f-b242-6e7c90b04944")
-				.alert(info).build();
-		defaultJavaSender.send(unifiedMessage, new MessageResponseCallback() {
-
-			public void onComplete(int statusCode) {
-				// do cool stuff
-			}
-
-			public void onError(Throwable throwable) {
-				// bring out the bad news
-				throwable.printStackTrace();
-			}
-		});
 	}
 
 	public int getAmount() {
@@ -334,7 +292,7 @@ public class Strade implements IStock {
 			return Integer.parseInt(jsonObject.getString("bl_balance"));
 			// System.out.println(response);
 		} catch (Exception e) {
-			sendErrorNotification("Error at getAmount", e);
+			AGPush.getInstance().sendErrorNotification("Error at getAmount", e);
 		}
 		return 0;
 	}
@@ -395,7 +353,8 @@ public class Strade implements IStock {
 			rs.setPrice(Integer.parseInt(jsonObject.getString("referencePrice")));
 
 		} catch (Exception e) {
-			sendErrorNotification("Errror at getStockInfo", e);
+			AGPush.getInstance().sendErrorNotification(
+					"Errror at getStockInfo", e);
 		}
 		return rs;
 	}
@@ -439,10 +398,12 @@ public class Strade implements IStock {
 			inputStream.close();
 			String response = writer.toString();
 			System.out.println(response);
-			sendNotification("cancled order id:" + orderId + ",stock:" + id);
+			AGPush.getInstance().sendNotification(
+					"cancled order id:" + orderId + ",stock:" + id);
 
 		} catch (Exception e) {
-			sendErrorNotification("Error at cancelOder", e);
+			AGPush.getInstance()
+					.sendErrorNotification("Error at cancelOder", e);
 		}
 		return rs;
 	}
@@ -531,10 +492,11 @@ public class Strade implements IStock {
 			response = writer.toString();
 			System.out.println(response);
 			// JSONObject jsonObject = new JSONObject(response);
-			sendNotification("Success order: BUY , stock:" + id + ",vol:"
-					+ volume + ",price:" + amount);
+			AGPush.getInstance().sendNotification(
+					"Success order: BUY , stock:" + id + ",vol:" + volume
+							+ ",price:" + amount);
 		} catch (Exception e) {
-			sendErrorNotification("ERROR At buyStock", e);
+			AGPush.getInstance().sendErrorNotification("ERROR At buyStock", e);
 		}
 		return rs;
 	}
@@ -549,7 +511,8 @@ public class Strade implements IStock {
 							+ "\",\"Qtty\":\""
 							+ volume
 							+ "\",\"PriceType\":\"LO\",\"Action\":\"preview\",\"Price\":\""
-							+ new DecimalFormat("0.0").format((double)amount/1000)
+							+ new DecimalFormat("0.0")
+									.format((double) amount / 1000)
 							+ "\",\"DivQtty\":\""
 							+ volume
 							+ "\",\"AfAcctno\":\"0001102285\",\"pv_ordertab\":\"ORDINPUT\"}",
@@ -590,7 +553,8 @@ public class Strade implements IStock {
 							+ "\",\"Qtty\":\""
 							+ volume
 							+ "\",\"PriceType\":\"LO\",\"Action\":\"confirmed\",\"Price\":\""
-							+ new DecimalFormat("0.0").format((double)amount/1000)
+							+ new DecimalFormat("0.0")
+									.format((double) amount / 1000)
 							+ "\",\"DivQtty\":\""
 							+ volume
 							+ "\",\"AfAcctno\":\"0001102285\",\"pv_ordertab\":\"ORDINPUT\"}",
@@ -625,10 +589,11 @@ public class Strade implements IStock {
 			response = writer.toString();
 			System.out.println(response);
 			// JSONObject jsonObject = new JSONObject(response);
-			sendNotification("Success order: BUY , stock:" + id + ",vol:"
-					+ volume + ",price:" + amount);
+			AGPush.getInstance().sendNotification(
+					"Success order: BUY , stock:" + id + ",vol:" + volume
+							+ ",price:" + amount);
 		} catch (Exception e) {
-			sendErrorNotification("ERROR At buyStock", e);
+			AGPush.getInstance().sendErrorNotification("ERROR At buyStock", e);
 		}
 		return rs;
 	}
@@ -714,12 +679,15 @@ public class Strade implements IStock {
 				entity = response1.getEntity();
 				writer = new StringWriter();
 				inputStream = decompress(entity);
+				
 				IOUtils.copy(inputStream, writer);
 				inputStream.close();
 				response = writer.toString();
+				//System.out.println(response);
 				StringUtils.Result OrderList_DXMainTable = StringUtils.search(
 						response, 0, "<table id=\"OrderList_DXMainTable\"",
 						"</table>");
+				//System.out.println(OrderList_DXMainTable.getResult());
 				Order order = null;
 				if (OrderList_DXMainTable.getResult() != null) {
 					List<StringUtils.Result> results = StringUtils.searchs(
@@ -728,7 +696,7 @@ public class Strade implements IStock {
 					for (StringUtils.Result r : results) {
 						List<StringUtils.Result> tds = StringUtils.searchs(
 								r.getResult(), 0, "<td", "</td>");
-
+						
 						boolean skip = false;
 						for (int i = 0; i < tds.size() && !skip; i++) {
 							StringUtils.Result tdCont = StringUtils.search(tds
@@ -839,6 +807,30 @@ public class Strade implements IStock {
 													tdCont.getStartIndex() + 2,
 													tdCont.getEndIndex())
 											.replace(",", "")));
+								}else if (i == 14) {
+									order.setQtyRemain(Integer.parseInt(tds
+											.get(i)
+											.getResult()
+											.substring(
+													tdCont.getStartIndex() + 2,
+													tdCont.getEndIndex())
+											.replace(",", "")));
+								}else if (i == 15) {
+									order.setQtyCancel(Integer.parseInt(tds
+											.get(i)
+											.getResult()
+											.substring(
+													tdCont.getStartIndex() + 2,
+													tdCont.getEndIndex())
+											.replace(",", "")));
+								}else if (i == 16) {
+									order.setQtyModified(Integer.parseInt(tds
+											.get(i)
+											.getResult()
+											.substring(
+													tdCont.getStartIndex() + 2,
+													tdCont.getEndIndex())
+											.replace(",", "")));
 								}
 							}
 						}
@@ -847,7 +839,8 @@ public class Strade implements IStock {
 
 			}
 		} catch (Exception e) {
-			sendErrorNotification("Error at getNormalOrderList", e);
+			AGPush.getInstance().sendErrorNotification(
+					"Error at getNormalOrderList", e);
 		}
 		return rs;
 	}
@@ -871,9 +864,9 @@ public class Strade implements IStock {
 		}
 		// System.out.println(bvsc.getStockInfo("HQC"));
 		// bvsc.buyStock("HQC", 5900, 150, RSAUtils.getPin());
-		//bvsc.cancelOder("HQC", "8000230615001447", "","150","6.40");
-		//System.out.println(bvsc.getStockInfo("HQC"));
-		//bvsc.sellStock("HQC", 6400, 150, "");
+		// bvsc.cancelOder("HQC", "8000230615001447", "","150","6.40");
+		// System.out.println(bvsc.getStockInfo("HQC"));
+		// bvsc.sellStock("HQC", 6400, 150, "");
 
 	}
 }

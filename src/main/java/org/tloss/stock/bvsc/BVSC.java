@@ -30,12 +30,9 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.CoreProtocolPNames;
-import org.jboss.aerogear.unifiedpush.JavaSender;
-import org.jboss.aerogear.unifiedpush.SenderClient;
-import org.jboss.aerogear.unifiedpush.message.MessageResponseCallback;
-import org.jboss.aerogear.unifiedpush.message.UnifiedMessage;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.tloss.agpush.AGPush;
 import org.tloss.stock.IStock;
 import org.tloss.stock.Order;
 import org.tloss.stock.RSAUtils;
@@ -48,9 +45,7 @@ import org.tloss.stock.utils.HtmlUtils.Input;
 
 public class BVSC implements IStock {
 	HttpClient httpclient = new DefaultHttpClient();
-	JavaSender defaultJavaSender = new SenderClient.Builder(
-			"https://www.runningchild.com:28443/ag-push/").build();
-
+	
 	private static InputStream decompress(final HttpEntity entity)
 			throws IOException {
 		final Header encodingHeader = entity.getContentEncoding();
@@ -217,13 +212,13 @@ public class BVSC implements IStock {
 			}
 
 		} catch (Exception e) {
-			sendErrorNotification("ERROR at login", e);
+			AGPush.getInstance().sendErrorNotification("ERROR at login", e);
 		}
 
 		return false;
 	}
 
-	protected void sendErrorNotification(String info, Exception e) {
+	/*protected void sendErrorNotification(String info, Exception e) {
 		UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
 				.pushApplicationId("d7ebb4ad-1cda-40a8-8bbb-8fe958d636f3")
 				.masterSecret("68dc7315-410e-447f-b242-6e7c90b04944")
@@ -258,7 +253,7 @@ public class BVSC implements IStock {
 				throwable.printStackTrace();
 			}
 		});
-	}
+	}*/
 
 	public int getAmount() {
 		try {
@@ -291,7 +286,7 @@ public class BVSC implements IStock {
 			return jsonObject.getInt("cashReal");
 			// System.out.println(response);
 		} catch (Exception e) {
-			sendErrorNotification("Error at getAmount", e);
+			AGPush.getInstance().sendErrorNotification("Error at getAmount", e);
 		}
 		return 0;
 	}
@@ -346,7 +341,7 @@ public class BVSC implements IStock {
 			rs.setPrice(Integer.parseInt(jsonObject.getString("referencePrice")));
 
 		} catch (Exception e) {
-			sendErrorNotification("Errror at getStockInfo", e);
+			AGPush.getInstance().sendErrorNotification("Errror at getStockInfo", e);
 		}
 		return rs;
 	}
@@ -391,10 +386,10 @@ public class BVSC implements IStock {
 			inputStream.close();
 			String response = writer.toString();
 			System.out.println(response);
-			sendNotification("cancled order id:" + orderId + ",stock:" + id);
+			AGPush.getInstance().sendNotification("cancled order id:" + orderId + ",stock:" + id);
 
 		} catch (Exception e) {
-			sendErrorNotification("Error at cancelOder", e);
+			AGPush.getInstance().sendErrorNotification("Error at cancelOder", e);
 		}
 		return rs;
 	}
@@ -441,7 +436,7 @@ public class BVSC implements IStock {
 			inputStream.close();
 			String response = writer.toString();
 			System.out.println(response);
-
+			JSONObject jsonObject = new JSONObject(response);
 			urlEntity = new StringEntity(
 					"{\"pv_sidecode\":\"B\",\"pv_symbol\":\""
 							+ id
@@ -451,7 +446,7 @@ public class BVSC implements IStock {
 							+ amount
 							+ "\",\"pv_limitprice\":\"0\",\"pv_pin\":\""
 							+ pin
-							+ "\",\"pv_acctno\":\"0101502292\",\"pv_ordertab\":\"ORDINPUT\",\"pv_isSavedPass\":false,\"pv_RequestId\":2}",
+							+ "\",\"pv_acctno\":\"0101502292\",\"pv_ordertab\":\"ORDINPUT\",\"pv_isSavedPass\":false,\"pv_RequestId\":"+jsonObject.getInt("NextRequestId")+"}",
 					"UTF-8");
 			httppost = new HttpPost(
 					"https://www.baovietsecurities.com.vn/WebOnlineTrading/OnlineService.svc/orderplacing_advance");
@@ -483,10 +478,10 @@ public class BVSC implements IStock {
 			response = writer.toString();
 			System.out.println(response);
 			// JSONObject jsonObject = new JSONObject(response);
-			sendNotification("Success order: BUY , stock:" + id + ",vol:"
+			AGPush.getInstance().sendNotification("Success order: BUY , stock:" + id + ",vol:"
 					+ volume + ",price:" + amount);
 		} catch (Exception e) {
-			sendErrorNotification("ERROR At buyStock", e);
+			AGPush.getInstance().sendErrorNotification("ERROR At buyStock", e);
 		}
 		return rs;
 	}
@@ -579,7 +574,7 @@ public class BVSC implements IStock {
 			rs.setTotalRecords(jsonObject.getInt("records"));
 			rs.setPageNumber(jsonObject.getInt("total"));
 		} catch (Exception e) {
-			sendErrorNotification("Error at getNormalOrderList", e);
+			AGPush.getInstance().sendErrorNotification("Error at getNormalOrderList", e);
 		}
 		return rs;
 	}
