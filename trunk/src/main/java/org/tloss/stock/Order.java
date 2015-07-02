@@ -1,8 +1,14 @@
 package org.tloss.stock;
 
-
-
 public class Order {
+
+	public static final int WAITTING = 0;
+	public static final int A_HAFT_MATCHED = 1;
+	public static final int MATCHED = 2;
+	public static final int CANCEL = 3;
+
+	public static final String _STATUS_STRING[] = { "WAITTING",
+			"A_HAFT_MATCHED", "MATCHED", "CANCEL" };
 
 	private String acctno;
 	private Boolean cancelable;
@@ -34,6 +40,20 @@ public class Order {
 	private String time;
 	private String timeType;
 	private String timeTypeValue;
+
+	public int getStatusInt() {
+		if (qtyMatched.equals(qtyOrder))
+			return MATCHED;
+		if (qtyMatched > 0)
+			return A_HAFT_MATCHED;
+		if (qtyCancel > 0)
+			return CANCEL;
+		return WAITTING;
+	}
+
+	public String getStatusString() {
+		return _STATUS_STRING[getStatusInt()];
+	}
 
 	/**
 	 * 
@@ -562,7 +582,8 @@ public class Order {
 				+ sessionCd + ", status=" + status + ", statusValue="
 				+ statusValue + ", symbol=" + symbol + ", time=" + time
 				+ ", timeType=" + timeType + ", timeTypeValue=" + timeTypeValue
-				+ "]";
+				+ ", statusString=" + getStatusString() + ", statusInt="
+				+ getStatusInt() + "]";
 	}
 
 }
