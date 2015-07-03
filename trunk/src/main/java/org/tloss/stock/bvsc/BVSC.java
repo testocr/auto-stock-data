@@ -14,6 +14,7 @@ import javax.script.ScriptEngineManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.NameValuePair;
@@ -25,6 +26,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.params.CookiePolicy;
+import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
@@ -36,6 +38,8 @@ import org.tloss.agpush.AGPush;
 import org.tloss.stock.IStock;
 import org.tloss.stock.Order;
 import org.tloss.stock.RSAUtils;
+import org.tloss.stock.StockHold;
+import org.tloss.stock.StockHoldItem;
 import org.tloss.stock.StockInfo;
 import org.tloss.stock.StockOrderPage;
 import org.tloss.stock.TrustEverythingSSLTrustManager;
@@ -45,7 +49,7 @@ import org.tloss.stock.utils.HtmlUtils.Input;
 
 public class BVSC implements IStock {
 	HttpClient httpclient = new DefaultHttpClient();
-	
+
 	private static InputStream decompress(final HttpEntity entity)
 			throws IOException {
 		final Header encodingHeader = entity.getContentEncoding();
@@ -64,6 +68,12 @@ public class BVSC implements IStock {
 	}
 
 	public void initHttpClient(HttpClient httpclient) {
+
+		/* proxy */
+		HttpHost proxy = new HttpHost("localhost", 5865);
+		httpclient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY,
+				proxy);
+
 		httpclient.getParams().setParameter(
 				CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1); // Default
 																			// to
@@ -218,42 +228,32 @@ public class BVSC implements IStock {
 		return false;
 	}
 
-	/*protected void sendErrorNotification(String info, Exception e) {
-		UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
-				.pushApplicationId("d7ebb4ad-1cda-40a8-8bbb-8fe958d636f3")
-				.masterSecret("68dc7315-410e-447f-b242-6e7c90b04944")
-				.alert(info + " : " + e.getMessage()).build();
-		defaultJavaSender.send(unifiedMessage, new MessageResponseCallback() {
-
-			public void onComplete(int statusCode) {
-				// do cool stuff
-			}
-
-			public void onError(Throwable throwable) {
-				// bring out the bad news
-				throwable.fillInStackTrace();
-			}
-		});
-	}
-
-	protected void sendNotification(String info) {
-
-		UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
-				.pushApplicationId("d7ebb4ad-1cda-40a8-8bbb-8fe958d636f3")
-				.masterSecret("68dc7315-410e-447f-b242-6e7c90b04944")
-				.alert(info).build();
-		defaultJavaSender.send(unifiedMessage, new MessageResponseCallback() {
-
-			public void onComplete(int statusCode) {
-				// do cool stuff
-			}
-
-			public void onError(Throwable throwable) {
-				// bring out the bad news
-				throwable.printStackTrace();
-			}
-		});
-	}*/
+	/*
+	 * protected void sendErrorNotification(String info, Exception e) {
+	 * UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
+	 * .pushApplicationId("d7ebb4ad-1cda-40a8-8bbb-8fe958d636f3")
+	 * .masterSecret("68dc7315-410e-447f-b242-6e7c90b04944") .alert(info + " : "
+	 * + e.getMessage()).build(); defaultJavaSender.send(unifiedMessage, new
+	 * MessageResponseCallback() {
+	 * 
+	 * public void onComplete(int statusCode) { // do cool stuff }
+	 * 
+	 * public void onError(Throwable throwable) { // bring out the bad news
+	 * throwable.fillInStackTrace(); } }); }
+	 * 
+	 * protected void sendNotification(String info) {
+	 * 
+	 * UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
+	 * .pushApplicationId("d7ebb4ad-1cda-40a8-8bbb-8fe958d636f3")
+	 * .masterSecret("68dc7315-410e-447f-b242-6e7c90b04944")
+	 * .alert(info).build(); defaultJavaSender.send(unifiedMessage, new
+	 * MessageResponseCallback() {
+	 * 
+	 * public void onComplete(int statusCode) { // do cool stuff }
+	 * 
+	 * public void onError(Throwable throwable) { // bring out the bad news
+	 * throwable.printStackTrace(); } }); }
+	 */
 
 	public int getAmount() {
 		try {
@@ -341,12 +341,14 @@ public class BVSC implements IStock {
 			rs.setPrice(Integer.parseInt(jsonObject.getString("referencePrice")));
 
 		} catch (Exception e) {
-			AGPush.getInstance().sendErrorNotification("Errror at getStockInfo", e);
+			AGPush.getInstance().sendErrorNotification(
+					"Errror at getStockInfo", e);
 		}
 		return rs;
 	}
 
-	public boolean cancelOder(String id, String orderId, String pin,String Qtty,String Price) {
+	public boolean cancelOder(String id, String orderId, String pin,
+			String Qtty, String Price) {
 		boolean rs = false;
 		try {
 
@@ -386,10 +388,12 @@ public class BVSC implements IStock {
 			inputStream.close();
 			String response = writer.toString();
 			System.out.println(response);
-			AGPush.getInstance().sendNotification("cancled order id:" + orderId + ",stock:" + id);
+			AGPush.getInstance().sendNotification(
+					"cancled order id:" + orderId + ",stock:" + id);
 
 		} catch (Exception e) {
-			AGPush.getInstance().sendErrorNotification("Error at cancelOder", e);
+			AGPush.getInstance()
+					.sendErrorNotification("Error at cancelOder", e);
 		}
 		return rs;
 	}
@@ -446,8 +450,8 @@ public class BVSC implements IStock {
 							+ amount
 							+ "\",\"pv_limitprice\":\"0\",\"pv_pin\":\""
 							+ pin
-							+ "\",\"pv_acctno\":\"0101502292\",\"pv_ordertab\":\"ORDINPUT\",\"pv_isSavedPass\":false,\"pv_RequestId\":"+jsonObject.getInt("NextRequestId")+"}",
-					"UTF-8");
+							+ "\",\"pv_acctno\":\"0101502292\",\"pv_ordertab\":\"ORDINPUT\",\"pv_isSavedPass\":false,\"pv_RequestId\":"
+							+ jsonObject.getInt("NextRequestId") + "}", "UTF-8");
 			httppost = new HttpPost(
 					"https://www.baovietsecurities.com.vn/WebOnlineTrading/OnlineService.svc/orderplacing_advance");
 			httppost.setEntity(urlEntity);
@@ -478,8 +482,9 @@ public class BVSC implements IStock {
 			response = writer.toString();
 			System.out.println(response);
 			// JSONObject jsonObject = new JSONObject(response);
-			AGPush.getInstance().sendNotification("Success order: BUY , stock:" + id + ",vol:"
-					+ volume + ",price:" + amount);
+			AGPush.getInstance().sendNotification(
+					"Success order: BUY , stock:" + id + ",vol:" + volume
+							+ ",price:" + amount);
 		} catch (Exception e) {
 			AGPush.getInstance().sendErrorNotification("ERROR At buyStock", e);
 		}
@@ -574,7 +579,83 @@ public class BVSC implements IStock {
 			rs.setTotalRecords(jsonObject.getInt("records"));
 			rs.setPageNumber(jsonObject.getInt("total"));
 		} catch (Exception e) {
-			AGPush.getInstance().sendErrorNotification("Error at getNormalOrderList", e);
+			AGPush.getInstance().sendErrorNotification(
+					"Error at getNormalOrderList", e);
+		}
+		return rs;
+	}
+
+	public StockHold GetHoldStock(int page, int numberItems) {
+		StockHold rs = new StockHold();
+		try {
+			HttpGet httpget = new HttpGet(
+					"https://www.baovietsecurities.com.vn/WebOnlineTrading/OnlineService.svc/GetSEInfo?_search=false&nd="
+							+ System.currentTimeMillis()
+							+ "&rows="
+							+ numberItems
+							+ "&page="
+							+ page
+							+ "&sidx=symbol&sord=asc");
+			httpget.setHeader(new BasicHeader("User-Agent",
+					"Mozilla/5.0 (Windows NT 6.3; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0"));
+			httpget.setHeader(new BasicHeader("Accept",
+					"application/json, text/javascript, */*; q=0.01"));
+			httpget.setHeader(new BasicHeader("Accept-Language",
+					"en-US,en;q=0.5"));
+			httpget.setHeader(new BasicHeader("Accept-Encoding",
+					"gzip, deflate"));
+			httpget.setHeader(new BasicHeader("X-Requested-With",
+					"XMLHttpRequest"));
+
+			httpget.setHeader(new BasicHeader("Connection", "keep-alive"));
+			httpget.setHeader(new BasicHeader("Referer",
+					"https://www.baovietsecurities.com.vn/WebOnlineTrading/Default.aspx"));
+			HttpResponse response1 = httpclient.execute(httpget);
+
+			HttpEntity entity = response1.getEntity();
+			StringWriter writer = new StringWriter();
+			InputStream inputStream = decompress(entity);
+			IOUtils.copy(inputStream, writer);
+			inputStream.close();
+			String response = writer.toString();
+			//System.out.println(response);
+			JSONObject jsonObject = new JSONObject(response);
+			// rs.add(jsonObject);
+			if (!jsonObject.isNull("rows")) {
+				JSONArray rows = jsonObject.getJSONArray("rows");
+				StockHoldItem order;
+				for (int i = 0; i < rows.length(); i++) {
+					JSONObject tmp = rows.getJSONObject(i);
+					order = new StockHoldItem();
+					order.setAfacctno(tmp.getString("afacctno"));
+					order.setAvlqtty(tmp.getInt("avlqtty"));
+					order.setSecurities_receiving_t0(tmp
+							.getInt("securities_receiving_t0"));
+					order.setSecurities_receiving_t1(tmp
+							.getInt("securities_receiving_t1"));
+					order.setSecurities_receiving_t2(tmp
+							.getInt("securities_receiving_t2"));
+					order.setSecurities_receiving_t3(tmp
+							.getInt("securities_receiving_t3"));
+					order.setSecurities_sending_t0(tmp
+							.getInt("securities_sending_t0"));
+					order.setSecurities_sending_t1(tmp
+							.getInt("securities_sending_t1"));
+					order.setSecurities_sending_t2(tmp
+							.getInt("securities_sending_t2"));
+					order.setSecurities_sending_t3(tmp
+							.getInt("securities_sending_t3"));
+					order.setSymbol(tmp.getString("symbol"));
+
+					rs.getHoldItems().add(order);
+				}
+			}
+			rs.setTotalRecords(jsonObject.getInt("records"));
+			rs.setPageNumber(jsonObject.getInt("total"));
+
+		} catch (Exception e) {
+			AGPush.getInstance().sendErrorNotification(
+					"Error at getNormalOrderList", e);
 		}
 		return rs;
 	}
@@ -600,9 +681,18 @@ public class BVSC implements IStock {
 			}
 			orderPage = bvsc.getNormalOrderList(i + 2, 5);
 		}
+		StockHold stockHold = bvsc.GetHoldStock(1, 10);
+		for (int i = 0; i < stockHold.getPageNumber(); i++) {
+			List<StockHoldItem> orders = stockHold.getHoldItems();
+			for (StockHoldItem order : orders) {
+				System.out.println(order);
+			}
+			stockHold = bvsc.GetHoldStock(i + 2, 10);
+		}
 		// System.out.println(bvsc.getStockInfo("HQC"));
 		// bvsc.buyStock("HQC", 5900, 150, RSAUtils.getPin());
 		// bvsc.cancelOder("HQC", "8000160615000047", RSAUtils.getPin());
 
 	}
+
 }

@@ -38,6 +38,7 @@ import org.tloss.common.utils.Utils;
 import org.tloss.stock.IStock;
 import org.tloss.stock.Order;
 import org.tloss.stock.RSAUtils;
+import org.tloss.stock.StockHold;
 import org.tloss.stock.StockInfo;
 import org.tloss.stock.StockOrderPage;
 import org.tloss.stock.TrustEverythingSSLTrustManager;
@@ -887,26 +888,32 @@ public class Strade implements IStock {
 					}
 				});
 		Strade bvsc = new Strade();
-		bvsc.login("017C102285", RSAUtils.getPassword("/strade.properties"));
-		System.out.println(bvsc.getAmount());
-		StockOrderPage orderPage;
-		int page = 1;
-		do {
-			orderPage = bvsc.getNormalOrderList(page, 5);
-			if (orderPage != null) {
-				System.out.println("==================Page: " + page
-						+ " ======================");
-				for (Order order : orderPage.getOrders()) {
-					System.out.println(order);
+		if (bvsc.login("017C102285", RSAUtils.getPassword("/strade.properties"))) {
+			System.out.println(bvsc.getAmount());
+			StockOrderPage orderPage;
+			int page = 1;
+			do {
+				orderPage = bvsc.getNormalOrderList(page, 5);
+				if (orderPage != null) {
+					System.out.println("==================Page: " + page
+							+ " ======================");
+					for (Order order : orderPage.getOrders()) {
+						System.out.println(order);
+					}
+					page++;
 				}
-				page++;
-			}
-		} while (orderPage != null && page <= orderPage.getPageNumber());
+			} while (orderPage != null && page <= orderPage.getPageNumber());
+		}
 		// System.out.println(bvsc.getStockInfo("HQC"));
 		// bvsc.buyStock("HQC", 5900, 150, RSAUtils.getPin());
 		// bvsc.cancelOder("HQC", "8000230615001447", "","150","6.40");
 		// System.out.println(bvsc.getStockInfo("HQC"));
 		// bvsc.sellStock("HQC", 6400, 150, "");
 
+	}
+
+	public StockHold GetHoldStock(int page,int numberItems) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

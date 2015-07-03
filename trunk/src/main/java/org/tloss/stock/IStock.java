@@ -1,6 +1,7 @@
 package org.tloss.stock;
 
 
+
 /**
  * 
  * @author tungt
@@ -24,4 +25,6 @@ public interface IStock {
 	public boolean sellStock(String id, int amount, int volume, String pin);
 
 	public boolean logout();
+	
+	public StockHold GetHoldStock(int page,int numberItems);
 }
