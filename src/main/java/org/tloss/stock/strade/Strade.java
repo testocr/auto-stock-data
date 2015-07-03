@@ -639,8 +639,15 @@ public class Strade implements IStock {
 
 				formparams.add(new BasicNameValuePair("DXCallbackName",
 						"OrderList"));
-				formparams.add(new BasicNameValuePair("DXCallbackArgument",
-						"c0:KV|2;[];CR|2;{};GB|9;7|REFRESH;"));
+				if (page == 1) {
+					formparams.add(new BasicNameValuePair("DXCallbackArgument",
+							"c0:KV|2;[];CR|2;{};GB|9;7|REFRESH;"));
+				} else {
+					formparams.add(new BasicNameValuePair("DXCallbackArgument",
+							"c0:KV|2;[];CR|18;{\"ctrlWidth\":1270};GB|20;12|PAGERONCLICK3|PN"
+									+ (page - 1) + ";"));
+
+				}
 				formparams.add(new BasicNameValuePair("OrderList$DXSelInput",
 						""));
 				formparams.add(new BasicNameValuePair("OrderList$DXKVInput",
@@ -648,10 +655,19 @@ public class Strade implements IStock {
 				formparams
 						.add(new BasicNameValuePair("OrderList$CallbackState",
 								OrderList_CallbackStateValue));
-				formparams.add(new BasicNameValuePair(
-						"OrderList$DXColResizedInput", "{}"));
-				formparams.add(new BasicNameValuePair("OrderList$DXSyncInput",
-						""));
+				if (page == 1) {
+					formparams.add(new BasicNameValuePair(
+							"OrderList$DXColResizedInput", "{}"));
+					formparams.add(new BasicNameValuePair(
+							"OrderList$DXSyncInput", ""));
+				} else {
+					formparams.add(new BasicNameValuePair(
+							"OrderList$DXColResizedInput",
+							"{\"ctrlWidth\":1270}"));
+					formparams.add(new BasicNameValuePair(
+							"OrderList$DXSyncInput", "SP3|0;0"));
+				}
+
 				formparams.add(new BasicNameValuePair("DXMVCEditorsValues",
 						"{}"));
 
@@ -679,15 +695,30 @@ public class Strade implements IStock {
 				entity = response1.getEntity();
 				writer = new StringWriter();
 				inputStream = decompress(entity);
-				
+
 				IOUtils.copy(inputStream, writer);
 				inputStream.close();
 				response = writer.toString();
-				//System.out.println(response);
+				// System.out.println(response);
+				// <b class="dxp-lead dxp-summary">Page 2 of 4 (27 items)</b>
+				// rs.setPageNumber(pageNumber)
+				//
+				StringUtils.Result pageInfo = StringUtils.search(response, 0,
+						"<b class=\"dxp-lead dxp-summary\">", "</b>");
+				StringUtils.Result PageNumber = StringUtils.search(
+						pageInfo.getResult(), 0, "of", "(");
+				StringUtils.Result Total = StringUtils.search(
+						pageInfo.getResult(), 0, "(", "items");
+				rs.setPageNumber(Integer.parseInt((pageInfo.getResult()
+						.substring(PageNumber.getStartIndex() + 2,
+								PageNumber.getEndIndex())).trim()));
+				rs.setTotalRecords(Integer.parseInt((pageInfo.getResult()
+						.substring(Total.getStartIndex() + 1,
+								Total.getEndIndex())).trim()));
 				StringUtils.Result OrderList_DXMainTable = StringUtils.search(
 						response, 0, "<table id=\"OrderList_DXMainTable\"",
 						"</table>");
-				//System.out.println(OrderList_DXMainTable.getResult());
+				// System.out.println(OrderList_DXMainTable.getResult());
 				Order order = null;
 				if (OrderList_DXMainTable.getResult() != null) {
 					List<StringUtils.Result> results = StringUtils.searchs(
@@ -696,7 +727,7 @@ public class Strade implements IStock {
 					for (StringUtils.Result r : results) {
 						List<StringUtils.Result> tds = StringUtils.searchs(
 								r.getResult(), 0, "<td", "</td>");
-						
+
 						boolean skip = false;
 						for (int i = 0; i < tds.size() && !skip; i++) {
 							StringUtils.Result tdCont = StringUtils.search(tds
@@ -807,7 +838,7 @@ public class Strade implements IStock {
 													tdCont.getStartIndex() + 2,
 													tdCont.getEndIndex())
 											.replace(",", "")));
-								}else if (i == 14) {
+								} else if (i == 14) {
 									order.setQtyRemain(Integer.parseInt(tds
 											.get(i)
 											.getResult()
@@ -815,7 +846,7 @@ public class Strade implements IStock {
 													tdCont.getStartIndex() + 2,
 													tdCont.getEndIndex())
 											.replace(",", "")));
-								}else if (i == 15) {
+								} else if (i == 15) {
 									order.setQtyCancel(Integer.parseInt(tds
 											.get(i)
 											.getResult()
@@ -823,7 +854,7 @@ public class Strade implements IStock {
 													tdCont.getStartIndex() + 2,
 													tdCont.getEndIndex())
 											.replace(",", "")));
-								}else if (i == 16) {
+								} else if (i == 16) {
 									order.setQtyModified(Integer.parseInt(tds
 											.get(i)
 											.getResult()
@@ -858,10 +889,19 @@ public class Strade implements IStock {
 		Strade bvsc = new Strade();
 		bvsc.login("017C102285", RSAUtils.getPassword("/strade.properties"));
 		System.out.println(bvsc.getAmount());
-		StockOrderPage orderPage = bvsc.getNormalOrderList(1, 5);
-		for (Order order : orderPage.getOrders()) {
-			System.out.println(order);
-		}
+		StockOrderPage orderPage;
+		int page = 1;
+		do {
+			orderPage = bvsc.getNormalOrderList(page, 5);
+			if (orderPage != null) {
+				System.out.println("==================Page: " + page
+						+ " ======================");
+				for (Order order : orderPage.getOrders()) {
+					System.out.println(order);
+				}
+				page++;
+			}
+		} while (orderPage != null && page <= orderPage.getPageNumber());
 		// System.out.println(bvsc.getStockInfo("HQC"));
 		// bvsc.buyStock("HQC", 5900, 150, RSAUtils.getPin());
 		// bvsc.cancelOder("HQC", "8000230615001447", "","150","6.40");
